@@ -241,6 +241,7 @@ const DEFAULT_SET = {ftp:192, peso:73, strDay:2, ftpExample:true, v:3, p20:[{dat
 let settings = Object.assign({}, DEFAULT_SET);
 let logs = {};
 let view = "hoy";
+let syncNote = "";
 let cur = todayKey();
 let store = null; // {save(key,obj)}
 
@@ -375,6 +376,7 @@ function renderHoy(){
   let h = '<div style="display:flex;flex-direction:column;gap:16px">';
   h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
   if(cur!==todayKey()) h+='<button class="btn" id="goToday" style="align-self:center">Volver a hoy</button>';
+  if(IV.id&&IV.key) h+='<div class="row" style="justify-content:center;gap:10px"><button class="btn" id="syncBtn">Sincronizar con intervals.icu</button><span class="muted" id="syncMsg" style="font-size:12px">'+esc(syncNote)+'</span></div>';
   // sesión
   h += '<section class="card"><div class="row between"><span class="lbl">Entreno</span>'+(p.tag?'<span class="pill" style="background:var(--surface-2);color:var(--warn)">'+p.tag+'</span>':'')+'</div>';
   h += '<div class="session '+zclass(p.z)+'">'+(p.place?'<div class="lbl" style="color:var(--ember)">'+esc(p.place)+'</div>':'')+'<h3>'+esc(p.t)+'</h3>'+(p.m?'<div class="num muted">'+Math.floor(p.m/60)+'h '+String(p.m%60).padStart(2,"0")+"'</div>":'')+'<div>'+esc(p.d)+'</div></div>';
@@ -413,6 +415,7 @@ function renderHoy(){
   on("prev","click",()=>{cur=addDays(cur,-1);render()});
   on("next","click",()=>{cur=addDays(cur,1);render()});
   on("goToday","click",()=>{cur=todayKey();render()});
+  on("syncBtn","click",()=>syncIV(false));
   on("toStr","click",()=>setView("fuerza"));
   on("sendIv","click",()=>{const msg=document.getElementById("copyMsg");msg.textContent="Enviando…";
     sendToIntervals(cur).then(()=>{msg.textContent="Enviado. Revisa el calendario de intervals.icu."}).catch(err=>{msg.textContent=err.message==="http 401"||err.message==="http 403"?"Clave o ID incorrectos. Revisa Semana → Ajustes.":"No se pudo enviar (puede bloquearlo el navegador). Usa Copiar entreno."})});
@@ -599,6 +602,29 @@ function renderMes(){
   $view.querySelectorAll(".md").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
 }
 
+async function syncIV(auto){
+  if(!IV.id||!IV.key){ if(!auto){ syncNote="Añade tu ID y clave en Semana → intervals.icu."; render(); } return; }
+  syncNote="Sincronizando…"; if(!auto) render();
+  try{
+    const oldest=addDays(todayKey(),-14), newest=addDays(todayKey(),1);
+    const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(IV.id)+"/activities?oldest="+oldest+"&newest="+newest,{headers:{"Authorization":"Basic "+btoa("API_KEY:"+IV.key)}});
+    if(!r.ok) throw new Error("http "+r.status);
+    const list=await r.json();
+    let n=0;
+    list.filter(a=>/ride/i.test(a.type||"")).forEach(a=>{
+      const k=(a.start_date_local||"").slice(0,10); if(!k) return;
+      const mins=Math.round((a.moving_time||a.elapsed_time||0)/60);
+      const w=Math.round(a.icu_weighted_avg_watts||a.average_watts||0);
+      const L=getLog(k), patch={done:true};
+      if(mins>0 && !(L.min>0)) patch.min=mins;
+      if(w>0 && !L.np) patch.np=w;
+      setLog(k,patch); n++;
+    });
+    syncNote="Sincronizado: "+n+" salidas en bici · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  }catch(e){ syncNote=(e.message==="http 401"||e.message==="http 403")?"Clave o ID incorrectos.":"No se pudo sincronizar. Revisa la conexión."; }
+  render();
+}
+
 function render(){
   const ph = phaseOf(todayKey());
   document.getElementById("phasePill").textContent = ph.name;
@@ -616,6 +642,7 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dat
 })();
 render();
 flash("Guardado en este teléfono");
+if(IV.id&&IV.key) syncIV(true);
 
 // ---------- intervals.icu (opcional) ----------
 function loadIV(){ try{ const v=JSON.parse(localStorage.getItem("ep-iv")||"null"); if(v){IV.id=v.id||"";IV.key=v.key||"";} }catch(e){} }
