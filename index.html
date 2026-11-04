@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Entreno Urbión 2027</title>
+<meta name="description" content="Seguimiento diario, entreno con vatios y menú para la BTT Urbión 2027.">
+<meta name="theme-color" content="#1f5f45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Entreno">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cuaderno de entrenamiento móvil — cabecera con fase y cuenta atrás, pestañas, tarjetas de sesión con zonas de potencia */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --surface-2:#e8ece6; --fg:#16201b; --muted:#5a6a61; --line:#d3dad3;
+  --pine:#1f5f45; --pine-soft:#dcebe2; --ember:#c8641c;
+  --z1:#8a968f; --z2:#2f7fc1; --z3:#3c9a5f; --z4:#d9932a; --z5:#cf4a3c;
+  --ok:#2e8b57; --warn:#b7791f;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#18211c; --surface-2:#212c26; --fg:#e6ede8; --muted:#94a59b; --line:#2c3a33;
+  --pine:#5cc495; --pine-soft:#1d3a2d; --ember:#f08a3e;
+  --z1:#7d8a83; --z2:#5aa6e6; --z3:#5cc485; --z4:#f0b04a; --z5:#f07062; --ok:#5cc485; --warn:#f0b04a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#18211c; --surface-2:#212c26; --fg:#e6ede8; --muted:#94a59b; --line:#2c3a33;
+  --pine:#5cc495; --pine-soft:#1d3a2d; --ember:#f08a3e;
+  --z1:#7d8a83; --z2:#5aa6e6; --z3:#5cc485; --z4:#f0b04a; --z5:#f07062; --ok:#5cc485; --warn:#f0b04a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1{font-size:30px;line-height:1.05}
+h2{font-size:22px}
+h3{font-size:18px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.muted{color:var(--muted)}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.count{text-align:right}
+.count b{font-family:var(--display);font-size:34px;color:var(--ember);line-height:1}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--pine-soft);color:var(--pine);font-size:12px;font-weight:600}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;position:sticky;top:0;z-index:5}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px var(--body);padding:9px 4px;border-radius:7px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.daynav button,.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 12px;font:500 14px var(--body);cursor:pointer}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.session{border-left:4px solid var(--z2);border-radius:0;padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.session.z1{border-color:var(--z1)}.session.z3{border-color:var(--z3)}.session.z4{border-color:var(--z4)}.session.z5{border-color:var(--z5)}.session.str{border-color:var(--ember)}
+.watts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.watt{background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.watt .num{font-size:15px}
+.macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.macro{background:var(--surface-2);border-radius:8px;padding:8px;text-align:center}
+.macro .num{font-size:18px;display:block}
+.meal{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.meal:first-child{border-top:0}
+.meal input{width:20px;height:20px;margin-top:2px;accent-color:var(--pine)}
+.meal .t{font-weight:600}
+.meal .time{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:6px}
+.meal ul{margin:2px 0 0;padding-left:18px;grid-column:2}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input[type=number],input[type=text],select,textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:9px 10px;font:15px var(--body)}
+textarea{min-height:70px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--ember)}
+.check{display:flex;gap:10px;align-items:center;font-weight:500}
+.check input{width:22px;height:22px;accent-color:var(--pine)}
+.week{display:flex;flex-direction:column;gap:0}
+.wday{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.wday:first-child{border-top:0}
+.wday.today .dname{color:var(--ember)}
+.dname{font-family:var(--display);font-size:18px;font-weight:600;line-height:1}
+.dname small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+.bar{height:6px;border-radius:3px;background:var(--z2)}
+.status{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--bg)}
+.status.done{background:var(--ok);border-color:var(--ok)}
+.ex{display:grid;grid-template-columns:auto 1fr 84px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ex:first-of-type{border-top:0}
+.ex input[type=checkbox]{width:22px;height:22px;accent-color:var(--ember)}
+.ex .sets{font-family:var(--mono);font-size:13px;color:var(--ember)}
+.note{font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface-2);border-radius:8px;padding:10px;text-align:center}
+.stat .num{font-size:20px;display:block}
+.chart{overflow-x:auto}
+.save{font-size:12px;color:var(--muted)}
+.phases{display:flex;flex-direction:column;gap:8px}
+.ph{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;border-radius:8px;background:var(--surface-2)}
+.ph.now{outline:2px solid var(--pine)}
+@media (max-width:420px){.macros{grid-template-columns:repeat(2,1fr)}h1{font-size:26px}}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="lbl">Temporada 2027 · Josu</div>
+      <h1>Plan Urbión 2027</h1>
+      <span class="pill" id="phasePill">Fase</span>
+    </div>
+    <div class="count"><b class="num" id="daysLeft">–</b><div class="lbl">días a BTT Urbión*</div></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-hoy" aria-selected="true" data-v="hoy">Hoy</button>
+    <button role="tab" id="tab-semana" aria-selected="false" data-v="semana">Semana</button>
+    <button role="tab" id="tab-fuerza" aria-selected="false" data-v="fuerza">Fuerza</button>
+    <button role="tab" id="tab-progreso" aria-selected="false" data-v="progreso">Progreso</button>
+  </nav>
+
+  <main id="view"></main>
+  <p class="save" id="saveState">Cargando tus datos…</p>
+  <p class="save">* Fecha estimada (19 jun 2027) hasta que la organización publique el calendario. Zonas de potencia según Coggan, % de FTP.</p>
+</div>
+
+<script>
+(function(){
+const RACE = "2027-06-18", START = "2026-11-09";
+const DOW = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const PHASES = [
+  {id:"pre", name:"Semana de inicio · test", from:"2026-11-02", to:"2026-11-08"},
+  {id:"reinc", name:"Vuelta progresiva", from:"2026-11-09", to:"2026-12-06"},
+  {id:"base1", name:"Base aeróbica", from:"2026-12-07", to:"2027-01-10"},
+  {id:"base2", name:"Base 2 · tempo y fuerza máxima", from:"2027-01-11", to:"2027-02-14"},
+  {id:"build", name:"Construcción · umbral y VO2máx", from:"2027-02-15", to:"2027-04-04"},
+  {id:"spec", name:"Específico MTB por etapas", from:"2027-04-05", to:"2027-05-23"},
+  {id:"peak", name:"Pico y afinado", from:"2027-05-24", to:"2027-06-20"}
+];
+const DST = "2027-03-28"; // cambio de hora: desde aquí hay luz después del trabajo
+const REINC_F = [0.7,0.85,1,0.65]; // rampa de las 4 semanas de vuelta
+const Z = {Z1:[0,.55],Z2:[.56,.75],Z3:[.76,.90],SS:[.88,.94],Z4:[.95,1.05],Z5:[1.06,1.20]};
+const ZDESC = {Z1:"Recuperación",Z2:"Fondo aeróbico",Z3:"Tempo",SS:"Sweet spot",Z4:"Umbral",Z5:"VO2máx"};
+
+const Q = {
+  pre:{tue:{t:"Rodillo Z2 suave",m:45,z:"Z2",zones:["Z2"],d:"45' en Z2 para recordar sensaciones. Nada de apretar."},
+       thu:{t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. FTP ≈ 75% de tu mejor minuto. Es más llevadero que el test de 20' tras meses parado. Apunta el FTP en Semana → Ajustes."},
+       fri:{t:"Descanso",m:0,rest:true},
+       sat:{t:"MTB Z2",m:90,z:"Z2",zones:["Z2"],d:"1h30 en Z2. Subidas tranquilas, sin cebarse."},
+       sun:{t:"Carretera Z2",m:75,z:"Z2",zones:["Z2"],d:"1h15 en Z2, terreno cómodo."}},
+  reinc:{tue:{t:"Rodillo Z2 + cadencia",m:60,z:"Z2",zones:["Z2"],d:"60' en Z2 con 4×30\" a 100–110 rpm. Ventilador delante y bidón de 750 ml: en rodillo se suda el doble."},
+       thu:{t:"Rodillo Z2 + tempo suave",m:60,z:"Z3",zones:["Z2","Z3"],d:"60' en Z2 con 3×6' en Z3 bajo y 3' suaves entre bloques."},
+       fri:{t:"Exterior suave",m:60,z:"Z2",zones:["Z2"],d:"1h en Z2 por llano. Luces encendidas si se te echa la noche."},
+       sat:{t:"MTB Z2",m:120,z:"Z2",zones:["Z2"],d:"2h en Z2. En subida, si pasas de Z3, baja piñón o camina un tramo."},
+       sun:{t:"Carretera Z2",m:90,z:"Z2",zones:["Z2"],d:"1h30 en Z2."}},
+  base1:{tue:{t:"Rodillo Z2 + cadencia",m:75,z:"Z2",zones:["Z2"],d:"75' en Z2 con 5×1' a 100–110 rpm y 2' suaves. Mejora la soltura de pedalada."},
+       thu:{t:"Rodillo Z2 + tempo",m:75,z:"Z3",zones:["Z2","Z3"],d:"75' con 3×10' en Z3 (tempo) y 5' suaves entre bloques."},
+       fri:{t:"Exterior Z2",m:60,z:"Z2",zones:["Z2"],d:"1h en Z2."},
+       sat:{t:"MTB larga Z2",m:150,z:"Z2",zones:["Z2"],d:"2h30 (sube hasta 3h al final de la fase) en Z2. Subidas sin pasar de Z3. 60 g de hidratos por hora."},
+       sun:{t:"Carretera Z2",m:105,z:"Z2",zones:["Z2"],d:"1h45 en Z2. Pedalada redonda, sin picos."}},
+  base2:{tue:{t:"Rodillo sweet spot 3×12'",m:75,z:"SS",zones:["Z2","SS"],d:"15' calentamiento. 3×12' en sweet spot con 4' suaves. Vuelta a la calma 10'."},
+       thu:{t:"Rodillo tempo a baja cadencia",m:75,z:"Z3",zones:["Z2","Z3"],d:"75' con 2×15' en Z3 a 70–80 rpm (fuerza en la bici)."},
+       fri:{t:"Exterior Z2",m:60,z:"Z2",zones:["Z2"],d:"1h en Z2."},
+       sat:{t:"MTB larga con subidas",m:180,z:"Z3",zones:["Z2","Z3"],d:"3h. Llano en Z2, subidas largas en Z3. 60–70 g de hidratos por hora."},
+       sun:{t:"Carretera Z2",m:120,z:"Z2",zones:["Z2"],d:"2h en Z2."}},
+  build:{tue:{t:"VO2máx 5×4'",m:70,z:"Z5",zones:["Z2","Z5"],d:"20' calentamiento. 5×4' en Z5 con 4' suaves. La sesión clave para subir tu techo aeróbico."},
+       thu:{t:"Umbral 2×20'",m:80,z:"Z4",zones:["Z2","Z4"],d:"20' calentamiento. 2×20' en Z4 con 8' suaves."},
+       fri:{t:"Exterior Z2 + sprints",m:60,z:"Z2",zones:["Z2"],d:"1h en Z2 con 6×10\" de sprint sentado."},
+       sat:{t:"MTB con subidas a umbral",m:210,z:"Z4",zones:["Z2","Z4"],d:"3h30. 3–4 subidas de 8–15' en Z4. Resto Z2. 70–80 g/h de hidratos."},
+       sun:{t:"Carretera Z2 larga",m:120,z:"Z2",zones:["Z2"],d:"2h en Z2. Fatiga acumulada a propósito."}},
+  spec:{tue:{t:"30/15 Rønnestad",m:70,z:"Z5",zones:["Z2","Z5"],d:"3 series de 13×(30\" a 120% FTP / 15\" suave), 3' entre series. Mejora VO2máx en ciclistas entrenados."},
+       thu:{t:"Sobre-bajo umbral 3×12'",m:80,z:"Z4",zones:["Z2","Z4"],d:"3×12' alternando 2' al 95% y 1' al 105% FTP. Simula cambios de ritmo en MTB."},
+       fri:{t:"MTB técnica corta",m:45,z:"Z2",zones:["Z2"],d:"45' de sendero técnico a ritmo suave: trabaja bajadas y curvas."},
+       sat:{t:"MTB técnica larga",m:240,z:"Z3",zones:["Z2","Z3","Z4"],d:"4h en terreno tipo Urbión: pista, sendero, bajadas técnicas. Ensaya avituallamiento: 80–90 g/h."},
+       sun:{t:"MTB o carretera día 2",m:150,z:"Z2",zones:["Z2","Z3"],d:"2h30 con las piernas cansadas: simula la etapa del día siguiente. Una vez al mes, carretera con puertos largos para la QH."}},
+  peak:{tue:{t:"VO2 corto 2×8'",m:60,z:"Z5",zones:["Z2","Z5"],d:"2×8' alternando 30\" Z5 / 30\" Z2. Mantener chispa sin fatigar."},
+       thu:{t:"Activación ritmo carrera",m:50,z:"Z4",zones:["Z2","Z4"],d:"45' Z2 con 3×3' a ritmo de carrera."},
+       fri:{t:"Rodaje + aceleraciones",m:45,z:"Z2",zones:["Z2"],d:"45' Z2 con 3 aceleraciones de 20\"."},
+       sat:{t:"Simulacro de etapa",m:150,z:"Z3",zones:["Z2","Z3","Z4"],d:"2h30 con la bici, ropa y comida del día de carrera."},
+       sun:{t:"Rodaje Z2",m:90,z:"Z2",zones:["Z2"],d:"1h30 suave."}}
+};
+
+const STR = {
+  reinc:{title:"Adaptación",note:"Vuelves tras meses parado: pesos con los que te sobren 3 repeticiones. Las dos primeras semanas, 2 series en vez de 3. Agujetas fuertes = demasiado peso. Descansa 90\".",ex:[
+    ["Sentadilla goblet","3×12"],["Peso muerto rumano con mancuernas","3×10"],["Zancada atrás","3×8 por pierna"],["Puente de glúteo","3×15"],["Remo con mancuerna","3×10"],["Plancha + plancha lateral","3×30\""]]},
+  base1:{title:"Fuerza base",note:"Sube el peso: 4×6–8 dejando 2 repeticiones en reserva. Descansa 2'.",ex:[
+    ["Sentadilla (goblet o barra)","3×10"],["Peso muerto rumano","3×10"],["Zancada búlgara","3×8 por pierna"],["Hip thrust","3×12"],["Remo con mancuerna","3×10"],["Plancha + Pallof press","3×40\" / 2×12"]]},
+  base2:{title:"Fuerza máxima",note:"Cargas pesadas (4–6 repeticiones, últimas duras). Es el tipo de fuerza que mejora la economía de pedaleo (Rønnestad y Mujika 2014). Descansa 2–3'.",ex:[
+    ["Sentadilla","4×5"],["Peso muerto rumano","4×6"],["Zancada búlgara","3×6 por pierna"],["Step-up con peso","3×6 por pierna"],["Remo","3×8"],["Core antirrotación","3×30\""]]},
+  build:{title:"Mantenimiento y potencia",note:"Mismo peso que en base 2, menos series. La subida, rápida y controlada. Mantener la fuerza cuesta mucho menos que ganarla.",ex:[
+    ["Sentadilla explosiva","3×4"],["Peso muerto rumano","3×5"],["Zancada búlgara","2×6 por pierna"],["Saltos al cajón","3×5"],["Core","2×40\""]]},
+  spec:null, peak:{title:"Mantenimiento ligero",note:"Solo hasta 10 días antes de la carrera. Después, nada de fuerza.",ex:[
+    ["Sentadilla","2×3"],["Saltos al cajón","2×5"],["Core","2×30\""]]}
+};
+STR.spec = STR.build; STR.pre = STR.reinc;
+
+const MENUS = {
+  bajo:{name:"Día suave o de fuerza",meals:[
+    ["Desayuno","7:00",["3 huevos (o 2 huevos + 100 g de claras)","60 g de pan integral con tomate","1 kiwi","Café o té"]],
+    ["Media mañana","10:30",["250 g de skyr o yogur griego natural","1 pieza de fruta","15 g de nueces"]],
+    ["Comida","14:00",["Medio plato de verdura o ensalada","150 g de legumbre cocida o 60 g de arroz integral (en crudo)","160 g de pollo, pavo o merluza","1 cucharada de aceite de oliva"]],
+    ["Merienda","17:30",["200 g de queso fresco batido","Un puñado de frutos rojos o 1 manzana"]],
+    ["Cena","21:00",["Crema de verduras o ensalada grande primero","180 g de pescado o tortilla de 2 huevos con atún","200 g de patata cocida (mejor enfriada)","1 cucharada de aceite de oliva"]],
+    ["Antes de dormir","23:00",["250 ml de kéfir o 200 g de requesón (proteína lenta)"]]]},
+  medio:{name:"Día de entreno de 60–150 min",meals:[
+    ["Desayuno","7:00",["80 g de copos de avena con 300 ml de leche","1 plátano","2 huevos"]],
+    ["Media mañana","10:30",["Bocadillo: 80 g de pan con 60 g de pavo o jamón","1 fruta"]],
+    ["Comida","14:00",["100 g de pasta o arroz (en crudo)","150 g de pollo o ternera magra","Verdura","1 cucharada de aceite de oliva"]],
+    ["Pre-entreno","17:15",["1 plátano","2 tortitas de arroz con miel"]],
+    ["Durante","",["Más de 75': bidón con 30–40 g de hidratos por hora","Siempre agua con sales"]],
+    ["Recuperación","al acabar",["500 ml de leche con cacao o batido de 25 g de proteína","1 fruta"]],
+    ["Cena","21:00",["200 g de patata o 80 g de arroz (en crudo)","150 g de pescado","Verdura","1 cucharada de aceite de oliva"]]]},
+  alto:{name:"Día de salida larga (más de 2h30)",meals:[
+    ["Desayuno","2–3 h antes",["100 g de avena con leche","1 plátano y 20 g de miel","2 tostadas con mermelada"]],
+    ["Durante","cada hora",["60–90 g de hidratos por hora (geles, barritas, bidón)","Mezcla glucosa:fructosa para pasar de 60 g/h","500–750 ml de líquido con sales por hora"]],
+    ["Recuperación","0–30 min",["Batido con 30 g de proteína","80 g de hidratos (pan blanco, zumo o fruta)"]],
+    ["Comida","",["120 g de pasta (en crudo) con tomate","150 g de carne magra","Ensalada"]],
+    ["Merienda","",["Yogur con 40 g de cereales","1 fruta"]],
+    ["Cena","21:00",["100 g de arroz (en crudo)","2 huevos y 120 g de atún","Verdura"]]]}
+};
+
+const IV = {id:"", key:""};
+// ---------- estado ----------
+const DEFAULT_SET = {ftp:195, peso:73, strDay:2, ftpExample:true, v:2};
+let settings = Object.assign({}, DEFAULT_SET);
+let logs = {};
+let view = "hoy";
+let cur = todayKey();
+let store = null; // {save(key,obj)}
+
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+// ---------- fechas ----------
+function todayKey(){const d=new Date();return fmt(d)}
+function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parse(k){const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)}
+function addDays(k,n){const d=parse(k);d.setDate(d.getDate()+n);return fmt(d)}
+function dow(k){return (parse(k).getDay()+6)%7}
+function diffDays(a,b){return Math.round((parse(b)-parse(a))/864e5)}
+function monday(k){return addDays(k,-dow(k))}
+function phaseOf(k){return PHASES.find(p=>k>=p.from&&k<=p.to)||(k<PHASES[0].from?PHASES[0]:PHASES[PHASES.length-1])}
+function longDate(k){return parse(k).toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"})}
+
+// ---------- plan del día ----------
+const OV = {
+  "2026-11-03":{kind:"rest",t:"Sin entrenar",m:0,z:"Z1",zones:[],d:"Hoy no ha habido entreno. No se recupera: la semana se reorganiza a partir de mañana."},
+  "2026-11-04":{key:"pre.tue",f:1,kind:"ride",t:"Rodillo Z2 suave",m:45,z:"Z2",zones:["Z2"],d:"45' en Z2 para recordar sensaciones y soltar piernas antes del test. Nada de apretar.",place:"Rodillo"},
+  "2026-11-05":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. FTP ≈ 75% de tu mejor minuto. Apúntalo en Semana → Ajustes.",place:"Rodillo"},
+  "2026-11-06":{kind:"str",t:"Fuerza · primera toma de contacto",m:30,z:"str",zones:[],d:"Circuito de adaptación con 2 series y pesos muy ligeros. Va después del test y no antes, para que las agujetas no estropeen la medición.",place:"Gimnasio en casa"}
+};
+function planFor(k){
+  if(OV[k]) return Object.assign({tag:"Semana de inicio"},OV[k]);
+  const ph = phaseOf(k), q = Q[ph.id], d = dow(k);
+  const order = ["rest","tue","str","thu","fri","sat","sun"]; // plantilla con fuerza en miércoles
+  let slots = order.slice();
+  const sd = settings.strDay;
+  if(sd!==2){ const tmp=slots[sd]; slots[sd]="str"; slots[2]=tmp; }
+  const slot = slots[d];
+  const toRace = diffDays(k,RACE);
+  let f = 1, tag = "";
+  const wk = Math.floor(diffDays(START,k)/7);
+  if(toRace>=0 && toRace<=13){f = toRace<=6?0.5:0.65; tag="Afinado";}
+  else if(ph.id==="reinc"){f=REINC_F[wk]||1; tag= wk===3?"Semana de descarga":"Vuelta progresiva · semana "+(wk+1);}
+  else if(wk>=0 && wk%4===3){f=0.65; tag="Semana de descarga";}
+  else if(wk===4){f=0.9; tag="Entrada en base";}
+  const place = d<=3 ? (k<DST?"Rodillo":"Rodillo o exterior") : "Exterior";
+  if(slot==="rest") return {kind:"rest",t:"Descanso",m:0,z:"Z1",zones:[],d:"Descanso total o 15' de movilidad. Aquí se asimila el entrenamiento.",tag};
+  if(ph.id==="reinc" && wk===3 && slot==="thu") return {key:"ramp",kind:"ride",t:"Re-test rampa",m:40,z:"Z5",zones:["Z2"],d:"Mismo test que el primer día: 100 W y +20 W por minuto hasta no poder. FTP ≈ 75% de tu mejor minuto. Actualízalo en Ajustes para la fase de base.",tag,place};
+  if(slot==="str"){
+    const s = STR[ph.id];
+    if(toRace>=0 && toRace<=10) return {kind:"rest",t:"Descanso (sin fuerza)",m:0,z:"Z1",zones:[],d:"A menos de 10 días de la carrera no se hace fuerza.",tag};
+    return {kind:"str",t:"Fuerza · "+s.title,m:ph.id==="reinc"||ph.id==="pre"?40:50,z:"str",zones:[],d:s.note,tag,place:"Gimnasio en casa"};
+  }
+  const base = q[slot];
+  if(base.rest) return {kind:"rest",t:"Descanso",m:0,z:"Z1",zones:[],d:"Descanso antes del test y del fin de semana.",tag};
+  const fixed = /test/i.test(base.t);
+  return {kind:"ride",t:base.t,m:fixed?base.m:Math.round(base.m*f/5)*5,z:base.z,zones:base.zones,d:base.d,tag,place,key:ph.id+"."+slot,f};
+}
+// ---------- entrenos en formato intervals.icu ----------
+const WT = {
+  "pre.tue":{wu:10,cd:5},
+  "reinc.tue":{wu:10,cd:5,rep:{n:4,steps:[[30,"70% 105rpm"],[120,"65%"]]}},
+  "reinc.thu":{wu:10,cd:5,rep:{n:3,steps:[[360,"78-82%"],[180,"60%"]]}},
+  "base1.tue":{wu:10,cd:5,rep:{n:5,steps:[[60,"70% 105rpm"],[120,"65%"]]}},
+  "base1.thu":{wu:10,cd:5,rep:{n:3,steps:[[600,"76-85%"],[300,"60%"]]}},
+  "base2.tue":{wu:15,cd:10,rep:{n:3,steps:[[720,"88-93%"],[240,"55%"]]}},
+  "base2.thu":{wu:10,cd:5,rep:{n:2,steps:[[900,"78-85% 75rpm"],[300,"60%"]]}},
+  "build.tue":{wu:20,cd:10,rep:{n:5,steps:[[240,"106-115%"],[240,"50%"]]}},
+  "build.thu":{wu:20,cd:10,rep:{n:2,steps:[[1200,"95-100%"],[480,"55%"]]}},
+  "spec.tue":{wu:15,cd:10,rep:{n:13,steps:[[30,"120%"],[15,"50%"]]},outer:{n:3,rest:[180,"50%"]}},
+  "spec.thu":{wu:15,cd:10,rep:{n:4,steps:[[120,"95%"],[60,"105%"]]},outer:{n:3,rest:[240,"55%"]}},
+  "peak.tue":{wu:15,cd:10,rep:{n:8,steps:[[30,"110%"],[30,"65%"]]},outer:{n:2,rest:[300,"55%"]}},
+  "peak.thu":{wu:10,cd:5,rep:{n:3,steps:[[180,"90-95%"],[180,"60%"]]}}
+};
+function dur(sec){return sec%60===0?(sec/60)+"m":sec+"s"}
+function workoutText(p){
+  if(!p.key) return "";
+  if(p.key==="ramp"){
+    let t="Calentamiento\n- 10m ramp 45-60%\n- 3m 50%\n\nRampa: sigue hasta no poder más\n";
+    for(let w=100;w<=500;w+=20) t+="- 1m "+w+"w\n";
+    return t+"\nVuelta a la calma\n- 5m 40%";
+  }
+  const tp = WT[p.key]; if(!tp) return "";
+  const f = p.f||1;
+  let rn = tp.rep?tp.rep.n:0, on = tp.outer?tp.outer.n:0;
+  if(f<1){ if(tp.outer) on=Math.max(1,Math.round(on*f)); else if(tp.rep) rn=Math.max(1,Math.round(rn*f)); }
+  const stepSec = tp.rep?tp.rep.steps.reduce((s,x)=>s+x[0],0):0;
+  const setSec = tp.outer? on*(rn*stepSec+tp.outer.rest[0]) : rn*stepSec;
+  const F = Math.max(0, Math.round(p.m - tp.wu - tp.cd - setSec/60));
+  let t = "Calentamiento\n- "+tp.wu+"m ramp 50-70%\n\n";
+  if(F>0) t += "Fondo Z2\n- "+F+"m 65-72%\n\n";
+  if(tp.rep){
+    const block = rn+"x\n"+tp.rep.steps.map(x=>"- "+dur(x[0])+" "+x[1]).join("\n")+"\n";
+    if(tp.outer){ for(let i=0;i<on;i++) t += "Serie "+(i+1)+"\n"+block+"\nRecuperación\n- "+dur(tp.outer.rest[0])+" "+tp.outer.rest[1]+"\n\n"; }
+    else t += "Bloque principal\n"+block+"\n";
+  }
+  return t + "Vuelta a la calma\n- "+tp.cd+"m ramp 60-45%";
+}
+function level(p){ if(p.kind!=="ride"||p.m<60) return "bajo"; if(p.m<=150) return "medio"; return "alto"; }
+function targets(p){
+  const kg = settings.peso, lv = level(p);
+  let cho = p.kind==="rest"? 2 : lv==="bajo"? (p.kind==="str"?4:3) : lv==="medio"? (p.m<=75?5:6) : (p.m>=210?8:7);
+  const pro = 2.2, fat = lv==="bajo"?0.9:1.0;
+  const c=Math.round(cho*kg), pr=Math.round(pro*kg), fa=Math.round(fat*kg);
+  return {cho,c,pr,fa,kcal:Math.round(c*4+pr*4+fa*9),lv};
+}
+function zclass(z){return z==="str"?"str":z==="Z1"?"z1":(z==="Z3"||z==="SS")?"z3":z==="Z4"?"z4":z==="Z5"?"z5":"z2"}
+function zcolor(z){return "var(--"+(z==="str"?"ember":z==="SS"?"z3":z.toLowerCase())+")"}
+
+// ---------- guardar ----------
+function getLog(k){return logs["log_"+k]||{}}
+const timers = {};
+function setLog(k,patch){
+  const id="log_"+k; logs[id]=Object.assign({},logs[id]||{},patch,{date:k});
+  clearTimeout(timers[id]); timers[id]=setTimeout(()=>persist(id,logs[id]),500);
+}
+function persist(id,obj){
+  lsSet("ep-"+id,obj); const all=lsGet("ep-index")||[]; if(!all.includes(id)){all.push(id);lsSet("ep-index",all)}
+  flash("Guardado en este teléfono");
+}
+function migrate(s){ if(!s.v){ if(s.ftpExample && s.ftp===250) s.ftp=195; s.v=2; } return s; }
+function saveSettings(){ lsSet("ep-settings",settings); }
+function flash(t){document.getElementById("saveState").textContent=t}
+
+// ---------- vistas ----------
+const $view = document.getElementById("view");
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function wattsHTML(p){
+  if(!p.zones.length) return "";
+  return '<div class="watts">'+p.zones.map(z=>{const [a,b]=Z[z];const lo=Math.round(a*settings.ftp),hi=Math.round(b*settings.ftp);
+    return '<div class="watt" style="border-left:3px solid '+zcolor(z)+';border-radius:0 8px 8px 0"><div class="lbl">'+z+' · '+ZDESC[z]+'</div><span class="num">'+(z==="Z1"?"< "+hi:lo+"–"+hi)+' W</span></div>'}).join("")+'</div>';
+}
+
+function renderHoy(){
+  const p = planFor(cur), t = targets(p), L = getLog(cur), menu = MENUS[t.lv];
+  const ph = phaseOf(cur);
+  let h = '<div style="display:flex;flex-direction:column;gap:16px">';
+  h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
+  if(cur!==todayKey()) h+='<button class="btn" id="goToday" style="align-self:center">Volver a hoy</button>';
+  // sesión
+  h += '<section class="card"><div class="row between"><span class="lbl">Entreno</span>'+(p.tag?'<span class="pill" style="background:var(--surface-2);color:var(--warn)">'+p.tag+'</span>':'')+'</div>';
+  h += '<div class="session '+zclass(p.z)+'">'+(p.place?'<div class="lbl" style="color:var(--ember)">'+esc(p.place)+'</div>':'')+'<h3>'+esc(p.t)+'</h3>'+(p.m?'<div class="num muted">'+Math.floor(p.m/60)+'h '+String(p.m%60).padStart(2,"0")+"'</div>":'')+'<div>'+esc(p.d)+'</div></div>';
+  h += wattsHTML(p);
+  if(p.kind==="str") h+='<button class="btn" id="toStr">Abrir sesión de fuerza</button>';
+  const wtxt = workoutText(p);
+  if(wtxt){
+    h += '<details class="note" id="wkBox"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Cargar en el rodillo (intervals.icu → Garmin)</summary>';
+    h += '<ol style="margin:8px 0;padding-left:18px"><li>Pulsa <b>Copiar entreno</b>.</li><li>En intervals.icu abre el <b>calendario</b>, toca este día y añade un <b>entreno</b> (workout). Pega el texto en la descripción y guarda: se dibuja solo con los vatios de tu FTP.</li><li>Si tienes Garmin conectado con el envío de entrenos activado, aparece en tu Garmin al sincronizar.</li><li>En el Garmin: Entrenamiento → Entrenamientos → este entreno. Con el rodillo emparejado como "rodillo inteligente", la resistencia se ajusta sola (modo ERG).</li></ol>';
+    h += '<pre id="wkText" style="white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0;max-height:260px;overflow:auto;user-select:all">'+esc(wtxt)+'</pre>';
+    h += '<div class="row" style="margin-top:8px"><button class="btn primary" id="copyWk">Copiar entreno</button>'+(IV.id&&IV.key?'<button class="btn" id="sendIv">Enviar a intervals.icu</button>':'')+'<span class="muted" id="copyMsg" style="font-size:13px"></span></div></details>';
+  }
+  h += '<label class="check"><input type="checkbox" id="done" '+(L.done?"checked":"")+'> Hecho</label>';
+  h += '<label class="f">Esfuerzo percibido (RPE): <b class="num" id="rpeV" style="color:var(--fg)">'+(L.rpe||"–")+'</b>/10<input type="range" id="rpe" min="1" max="10" value="'+(L.rpe||5)+'"></label>';
+  h += '</section>';
+  // registro
+  h += '<section class="card"><span class="lbl">Registro del día</span><div class="fields">';
+  h += '<label class="f">Peso en ayunas (kg)<input type="number" step="0.1" id="peso" inputmode="decimal" value="'+(L.peso??"")+'" placeholder="'+settings.peso+'"></label>';
+  h += '<label class="f">Horas de sueño<input type="number" step="0.5" id="sueno" inputmode="decimal" value="'+(L.sueno??"")+'" placeholder="7.5"></label>';
+  h += '<label class="f">Potencia media (W)<input type="number" id="np" inputmode="numeric" value="'+(L.np??"")+'" placeholder="Opcional"></label>';
+  h += '<label class="f">Cintura (cm, lunes)<input type="number" step="0.5" id="cintura" inputmode="decimal" value="'+(L.cintura??"")+'" placeholder="A la altura del ombligo"></label>';
+  h += '<label class="f">Hambre o ansiedad<select id="hambre"><option value="">–</option>'+["1 · Nada","2 · Poca","3 · Normal","4 · Bastante","5 · Mucha"].map((o,i)=>'<option value="'+(i+1)+'"'+(L.hambre===i+1?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
+  h += '<label class="f">Sensación<select id="sens"><option value="">–</option>'+["Muy bien","Bien","Normal","Cansado","Muy cansado"].map(o=>'<option'+(L.sens===o?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
+  h += '</div><label class="f">Notas<textarea id="notas" placeholder="Molestias, tiempo, ruta…">'+esc(L.notas||"")+'</textarea></label></section>';
+  // nutrición
+  h += '<section class="card"><div class="row between"><span class="lbl">Nutrición · '+menu.name+'</span><span class="num muted">'+t.kcal+' kcal</span></div>';
+  h += '<div class="macros"><div class="macro"><span class="num">'+t.c+' g</span><span class="lbl">Hidratos</span></div><div class="macro"><span class="num">'+t.pr+' g</span><span class="lbl">Proteína</span></div><div class="macro"><span class="num">'+t.fa+' g</span><span class="lbl">Grasa</span></div><div class="macro"><span class="num">'+t.cho+'</span><span class="lbl">g HC/kg</span></div></div>';
+  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
+  h += '<div class="note"><b style="color:var(--fg)">'+(t.lv==="bajo"?"Día de déficit suave.":"Día de comer para entrenar.")+'</b> '+(t.lv==="bajo"?"Aquí es donde se pierde la grasa: menos hidratos, la misma proteína y mucho volumen de verdura.":"Hoy no se recorta: comer antes, durante y después del entreno evita el hambre voraz de la noche y protege el músculo.")+'</div>';
+  h += '<details class="note"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Si aprieta el hambre o la ansiedad</summary><ul style="margin:8px 0 0;padding-left:18px"><li>Primero un vaso de agua o un café o té, y espera 10 minutos.</li><li>Tentempiés que llenan mucho: fruta, skyr, huevo cocido, zanahoria o pepino con hummus, un caldo o palomitas hechas en casa.</li><li>Proteína en todas las comidas (30–40 g). Es lo que más sacia.</li><li>No pases más de 4 horas sin comer, sobre todo antes del rodillo.</li><li>Duerme 7–9 h: dormir poco dispara el hambre al día siguiente.</li><li>Nada está prohibido: 1–2 caprichos planificados a la semana. Las dietas rígidas acaban en atracones más a menudo que las flexibles.</li></ul></details>';
+  h += '<div class="note">Proteína a 2,2 g/kg repartida en 4–5 tomas, más la fuerza semanal, para ganar o mantener músculo mientras pierdes grasa. Ritmo objetivo: 0,3–0,4 kg por semana. Más rápido se pierde músculo y rendimiento.</div>';
+  h += '</section></div>';
+  $view.innerHTML = h;
+  const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn)};
+  on("prev","click",()=>{cur=addDays(cur,-1);render()});
+  on("next","click",()=>{cur=addDays(cur,1);render()});
+  on("goToday","click",()=>{cur=todayKey();render()});
+  on("toStr","click",()=>setView("fuerza"));
+  on("sendIv","click",()=>{const msg=document.getElementById("copyMsg");msg.textContent="Enviando…";
+    sendToIntervals(cur).then(()=>{msg.textContent="Enviado. Revisa el calendario de intervals.icu."}).catch(err=>{msg.textContent=err.message==="http 401"||err.message==="http 403"?"Clave o ID incorrectos. Revisa Semana → Ajustes.":"No se pudo enviar (puede bloquearlo el navegador). Usa Copiar entreno."})});
+  on("copyWk","click",()=>{const txt=document.getElementById("wkText").textContent,msg=document.getElementById("copyMsg");
+    const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("wkText"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Texto seleccionado: cópialo con el menú del móvil."};
+    try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent="Copiado. Pégalo en intervals.icu."},sel)}catch(e){sel()}});
+  on("done","change",e=>setLog(cur,{done:e.target.checked,min:e.target.checked?p.m:0}));
+  on("rpe","input",e=>{document.getElementById("rpeV").textContent=e.target.value;setLog(cur,{rpe:+e.target.value})});
+  on("hambre","change",e=>setLog(cur,{hambre:e.target.value?+e.target.value:null}));
+  ["peso","sueno","np","cintura"].forEach(id=>on(id,"input",e=>{const v=e.target.value===""?null:+e.target.value;setLog(cur,{[id]:v})}));
+  on("sens","change",e=>setLog(cur,{sens:e.target.value}));
+  on("notas","input",e=>setLog(cur,{notas:e.target.value}));
+  $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr})}));
+}
+
+function renderSemana(){
+  const mon = monday(cur), ph = phaseOf(mon);
+  let tot=0, done=0;
+  let rows = "";
+  for(let i=0;i<7;i++){
+    const k=addDays(mon,i), p=planFor(k), L=getLog(k);
+    tot+=p.m; if(L.done) done+=p.m;
+    const w = p.m?Math.max(8,Math.round(p.m/240*100)):0;
+    rows+='<div class="wday'+(k===todayKey()?" today":"")+'" data-k="'+k+'" role="button" tabindex="0"><div class="dname">'+DOW[i]+'<small>'+parse(k).getDate()+'/'+(parse(k).getMonth()+1)+'</small></div><div style="min-width:0"><div style="font-weight:500">'+esc(p.t)+'</div>'+(w?'<div class="bar" style="width:'+w+'%;background:'+zcolor(p.z)+';margin-top:4px"></div>':'')+'<div class="num muted" style="font-size:12px">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"—")+' · '+targets(p).c+' g HC</div></div><div class="status'+(L.done?" done":"")+'">'+(L.done?"✓":"")+'</div></div>';
+  }
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2>Semana del '+parse(mon).getDate()+' de '+parse(mon).toLocaleDateString("es-ES",{month:"long"})+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
+  h+='<div class="stats"><div class="stat"><span class="num">'+(tot/60).toFixed(1)+' h</span><span class="lbl">Planificado</span></div><div class="stat"><span class="num">'+(done/60).toFixed(1)+' h</span><span class="lbl">Hecho</span></div><div class="stat"><span class="num">'+(tot?Math.round(done/tot*100):0)+'%</span><span class="lbl">Cumplido</span></div></div>';
+  h+='<section class="card week">'+rows+'</section>';
+  h+='<section class="card"><span class="lbl">Ajustes</span><div class="fields">';
+  h+='<label class="f">Día de fuerza<select id="strDay">'+DOW.map((d,i)=>'<option value="'+i+'"'+(i===settings.strDay?" selected":"")+'>'+d+'</option>').join("")+'</select></label>';
+  h+='<label class="f">FTP (W)'+(settings.ftpExample?' <span style="color:var(--warn)">· estimado de tu historial, confírmalo con el test</span>':'')+'<input type="number" id="ftp" inputmode="numeric" value="'+settings.ftp+'"></label>';
+  h+='<label class="f">Peso de referencia (kg)<input type="number" step="0.1" id="pesoRef" inputmode="decimal" value="'+settings.peso+'"></label>';
+  h+='</div><div class="note">Evita poner la fuerza el día antes de la sesión de intervalos (martes o jueves) o de la salida larga: llegarás con las piernas cargadas. Lo ideal es miércoles o lunes.</div></section>';
+  h+='<section class="card"><span class="lbl">intervals.icu (opcional)</span><div class="fields"><label class="f">ID de atleta<input type="text" id="ivId" value="'+esc(IV.id)+'" placeholder="i12345"></label><label class="f">Clave API<input type="password" id="ivKey" value="'+esc(IV.key)+'" placeholder="Settings → Developer"></label></div><div class="row"><button class="btn" id="ivSave">Guardar</button><span class="muted" id="ivMsg" style="font-size:13px"></span></div><div class="note">Se guardan solo en este teléfono. Al enviar un entreno, se crea en tu calendario de intervals.icu.</div></section>';
+  h+='<section class="card"><span class="lbl">Copia de seguridad</span><p class="muted" style="margin:0">Tus datos están solo en este teléfono. Expórtalos antes de cambiar de móvil.</p><div class="row"><button class="btn" id="expBtn">Exportar datos</button><label class="btn" style="cursor:pointer">Importar<input type="file" id="impFile" accept="application/json" hidden></label><span class="muted" id="bkMsg" style="font-size:13px"></span></div></section>';
+  h+='<section class="card"><span class="lbl">Fases hasta junio</span><div class="phases">'+PHASES.map(p=>'<div class="ph'+(p.id===ph.id?" now":"")+'"><b>'+esc(p.name)+'</b><span class="num muted" style="font-size:12px">'+parse(p.from).toLocaleDateString("es-ES",{day:"numeric",month:"short"})+' – '+parse(p.to).toLocaleDateString("es-ES",{day:"numeric",month:"short"})+'</span></div>').join("")+'</div></section></div>';
+  $view.innerHTML=h;
+  document.getElementById("pw").onclick=()=>{cur=addDays(cur,-7);render()};
+  document.getElementById("nw").onclick=()=>{cur=addDays(cur,7);render()};
+  $view.querySelectorAll(".wday").forEach(el=>{const go=()=>{cur=el.dataset.k;setView("hoy")};el.onclick=go;el.onkeydown=e=>{if(e.key==="Enter")go()}});
+  document.getElementById("strDay").onchange=e=>{settings.strDay=+e.target.value;saveSettings();render()};
+  document.getElementById("ftp").onchange=e=>{const v=+e.target.value;if(v>80&&v<600){settings.ftp=v;settings.ftpExample=false;saveSettings();render()}};
+  document.getElementById("ivSave").onclick=()=>{saveIV(document.getElementById("ivId").value,document.getElementById("ivKey").value);document.getElementById("ivMsg").textContent="Guardado";render()};
+  document.getElementById("expBtn").onclick=()=>{const data={v:2,settings,logs};const blob=new Blob([JSON.stringify(data)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="entrenamiento-"+todayKey()+".json";document.body.appendChild(a);a.click();a.remove();document.getElementById("bkMsg").textContent="Archivo descargado"};
+  document.getElementById("impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);if(!d.logs||!d.settings) throw new Error();Object.keys(d.logs).forEach(id=>{logs[id]=d.logs[id];lsSet("ep-"+id,d.logs[id])});settings=Object.assign({},DEFAULT_SET,migrate(Object.assign({},d.settings)));saveSettings();const idx=lsGet("ep-index")||[];Object.keys(logs).forEach(id=>{if(!idx.includes(id))idx.push(id)});lsSet("ep-index",idx);document.getElementById("bkMsg").textContent="Importado";render()}).catch(()=>{document.getElementById("bkMsg").textContent="Archivo no válido"})};
+  document.getElementById("pesoRef").onchange=e=>{const v=+e.target.value;if(v>40&&v<150){settings.peso=v;saveSettings();render()}};
+}
+
+function strDateFor(k){ // día de fuerza de la semana de k
+  if(monday(k)==="2026-11-02") return "2026-11-06";
+  return addDays(monday(k),settings.strDay);
+}
+function renderFuerza(){
+  const k = strDateFor(cur), ph=phaseOf(k), s=STR[ph.id], L=getLog(k), sl=L.str||{};
+  const prevK = addDays(k,-7), P=(getLog(prevK).str)||{};
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(k)+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
+  h+='<section class="card"><h3>'+esc(s.title)+'</h3><div class="note">'+esc(s.note)+'</div>';
+  h+='<div class="note">Calentamiento: 5\' de bici o comba + 2 series ligeras del primer ejercicio.</div>';
+  h+='<div>'+s.ex.map((e,i)=>{const x=sl[i]||{},pv=(P[i]||{}).kg;return '<div class="ex"><input type="checkbox" data-ex="'+i+'" '+(x.done?"checked":"")+' aria-label="'+esc(e[0])+' hecho"><div style="min-width:0"><div style="font-weight:500">'+esc(e[0])+'</div><div class="sets">'+esc(e[1])+'</div>'+(pv?'<div class="muted" style="font-size:12px">Semana pasada: '+pv+' kg</div>':'')+'</div><label class="f" style="font-size:11px">kg<input type="number" step="0.5" data-kg="'+i+'" inputmode="decimal" value="'+(x.kg??"")+'"></label></div>'}).join("")+'</div>';
+  h+='<label class="check"><input type="checkbox" id="sdone" '+(L.done?"checked":"")+'> Sesión completada</label>';
+  h+='<div class="note">Haz la fuerza separada al menos 6 h de una sesión intensa en bici, o en un día sin bici. Toma 25–35 g de proteína después.</div></section></div>';
+  $view.innerHTML=h;
+  document.getElementById("pw").onclick=()=>{cur=addDays(cur,-7);render()};
+  document.getElementById("nw").onclick=()=>{cur=addDays(cur,7);render()};
+  const upd=(i,patch)=>{const st=Object.assign({},getLog(k).str||{});st[i]=Object.assign({},st[i]||{},patch);setLog(k,{str:st})};
+  $view.querySelectorAll("[data-ex]").forEach(cb=>cb.onchange=()=>upd(+cb.dataset.ex,{done:cb.checked}));
+  $view.querySelectorAll("[data-kg]").forEach(inp=>inp.oninput=()=>upd(+inp.dataset.kg,{kg:inp.value===""?null:+inp.value}));
+  document.getElementById("sdone").onchange=e=>setLog(k,{done:e.target.checked,min:e.target.checked?50:0});
+}
+
+function renderProgreso(){
+  const all = Object.values(logs).filter(l=>l&&l.date).sort((a,b)=>a.date<b.date?-1:1);
+  const pts = all.filter(l=>typeof l.peso==="number").slice(-60);
+  const last28 = all.filter(l=>diffDays(l.date,todayKey())<28&&diffDays(l.date,todayKey())>=0);
+  let plan28=0; for(let i=0;i<28;i++){plan28+=planFor(addDays(todayKey(),-i)).m}
+  const done28 = last28.reduce((s,l)=>s+(l.done?(l.min||0):0),0);
+  const sl = last28.filter(l=>l.sueno); const sAvg = sl.length?(sl.reduce((s,l)=>s+l.sueno,0)/sl.length).toFixed(1):"–";
+  const cw = all.filter(l=>typeof l.cintura==="number");
+  const cTxt = cw.length? cw[cw.length-1].cintura+(cw.length>1?' <small class="muted">('+((cw[cw.length-1].cintura-cw[0].cintura)>0?"+":"")+(cw[cw.length-1].cintura-cw[0].cintura).toFixed(1)+')</small>':""):"–";
+  const avgW=(from,to)=>{const w=all.filter(l=>typeof l.peso==="number"&&diffDays(l.date,todayKey())>=from&&diffDays(l.date,todayKey())<to);return w.length?w.reduce((s,l)=>s+l.peso,0)/w.length:null};
+  const w1=avgW(0,7), w0=avgW(7,14); const trend=(w1!=null&&w0!=null)?((w1-w0>0?"+":"")+(w1-w0).toFixed(1)+" kg"):"–";
+  const hw = all.filter(l=>l.hambre&&diffDays(l.date,todayKey())<7); const hAvg = hw.length?(hw.reduce((s,l)=>s+l.hambre,0)/hw.length).toFixed(1):"–";
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+='<div class="stats"><div class="stat"><span class="num">'+cTxt+'</span><span class="lbl">Cintura (cm)</span></div><div class="stat"><span class="num">'+hAvg+'</span><span class="lbl">Hambre media 7 d</span></div><div class="stat"><span class="num">'+trend+'</span><span class="lbl">Media 7 d vs anterior</span></div></div>';
+  h+='<div class="stats"><div class="stat"><span class="num">'+(pts.length?pts[pts.length-1].peso.toFixed(1):"–")+'</span><span class="lbl">Peso actual</span></div><div class="stat"><span class="num">'+(plan28?Math.round(done28/plan28*100):0)+'%</span><span class="lbl">Cumplido 28 d</span></div><div class="stat"><span class="num">'+sAvg+'</span><span class="lbl">Sueño medio</span></div></div>';
+  h+='<section class="card"><span class="lbl">Evolución del peso</span>';
+  if(pts.length<2){ h+='<p class="muted">Apunta tu peso en ayunas en la pestaña Hoy. Con dos registros aparece aquí la gráfica.</p>'; }
+  else {
+    const W=640,H=220,pl=40,pr=16,pt=16,pb=28;
+    const ys=pts.map(p=>p.peso), mn=Math.floor(Math.min(...ys)-0.5), mx=Math.ceil(Math.max(...ys)+0.5);
+    const t0=parse(pts[0].date).getTime(), t1=parse(pts[pts.length-1].date).getTime()||t0+1;
+    const X=d=>pl+(parse(d).getTime()-t0)/((t1-t0)||1)*(W-pl-pr), Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+    let g=''; for(let v=mn;v<=mx;v++){g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>'}
+    const line=pts.map((p,i)=>(i?"L":"M")+X(p.date).toFixed(1)+" "+Y(p.peso).toFixed(1)).join(" ");
+    const area=line+" L"+X(pts[pts.length-1].date).toFixed(1)+" "+(H-pb)+" L"+X(pts[0].date).toFixed(1)+" "+(H-pb)+" Z";
+    const lp=pts[pts.length-1];
+    g+='<path d="'+area+'" fill="var(--pine)" opacity=".12"/><path d="'+line+'" fill="none" stroke="var(--pine)" stroke-width="2"/>';
+    g+='<circle cx="'+X(lp.date)+'" cy="'+Y(lp.peso)+'" r="4" fill="var(--ember)"/>';
+    g+='<text x="'+pl+'" y="'+(H-8)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+pts[0].date.slice(5)+'</text><text x="'+(W-pr)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+lp.date.slice(5)+'</text>';
+    h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Evolución del peso">'+g+'</svg></div>';
+    const ch=(lp.peso-pts[0].peso).toFixed(1);
+    h+='<p class="muted">Cambio desde '+pts[0].date.slice(8)+'/'+pts[0].date.slice(5,7)+': <b class="num" style="color:var(--fg)">'+(ch>0?"+":"")+ch+' kg</b>. Fíjate en la tendencia semanal, no en el día a día: el agua y el glucógeno mueven ±1 kg.</p>';
+  }
+  h+='</section>';
+  h+='<section class="card"><span class="lbl">Punto de partida · tu historial de Garmin</span><div class="stats"><div class="stat"><span class="num">~230 W</span><span class="lbl">FTP feb 2026</span></div><div class="stat"><span class="num">~195 W</span><span class="lbl">FTP estimado hoy</span></div><div class="stat"><span class="num">1/sem</span><span class="lbl">Salidas desde julio</span></div></div><p class="muted" style="margin:0">En febrero hacías 5–7 salidas por semana y tu mejor potencia de 20 minutos llegó a 242 W. Entre abril y finales de julio no hay actividad, y desde entonces sales una vez por semana, unos 60–80 minutos, con picos de 20 minutos de 204–216 W. Por eso las 4 primeras semanas suben poco a poco y terminan con un nuevo test.</p></section>';
+  h+='<section class="card"><span class="lbl">Integraciones</span><p class="muted" style="margin:0">De momento el registro es manual. La conexión con intervals.icu (que recoge lo de Garmin) es el siguiente paso; TrainingPeaks no ofrece API a particulares. La báscula Xiaomi/Renpho no tiene conexión directa: el peso se apunta aquí.</p></section></div>';
+  $view.innerHTML=h;
+}
+
+function render(){
+  const ph = phaseOf(todayKey());
+  document.getElementById("phasePill").textContent = ph.name;
+  document.getElementById("daysLeft").textContent = Math.max(0,diffDays(todayKey(),RACE));
+  ({hoy:renderHoy,semana:renderSemana,fuerza:renderFuerza,progreso:renderProgreso})[view]();
+}
+function setView(v){view=v;document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v?"true":"false"));render();window.scrollTo(0,0)}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+
+// ---------- carga local inmediata ----------
+(function loadLocal(){
+  const s=lsGet("ep-settings"); if(s) settings=Object.assign({},DEFAULT_SET,migrate(Object.assign({},s)));
+  loadIV();
+  (lsGet("ep-index")||[]).forEach(id=>{const v=lsGet("ep-"+id); if(v) logs[id]=v;});
+})();
+render();
+flash("Guardado en este teléfono");
+
+// ---------- intervals.icu (opcional) ----------
+function loadIV(){ try{ const v=JSON.parse(localStorage.getItem("ep-iv")||"null"); if(v){IV.id=v.id||"";IV.key=v.key||"";} }catch(e){} }
+function saveIV(id,key){ IV.id=id.trim(); IV.key=key.trim(); try{localStorage.setItem("ep-iv",JSON.stringify({id:IV.id,key:IV.key}))}catch(e){} }
+async function sendToIntervals(k){
+  const p=planFor(k), txt=workoutText(p);
+  if(!IV.id||!IV.key) throw new Error("config");
+  const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(IV.id)+"/events",{
+    method:"POST",
+    headers:{"Authorization":"Basic "+btoa("API_KEY:"+IV.key),"Content-Type":"application/json"},
+    body:JSON.stringify({category:"WORKOUT",type:"Ride",start_date_local:k+"T07:00:00",name:p.t,description:txt})
+  });
+  if(!r.ok) throw new Error("http "+r.status);
+  return r.json();
+}
+})();
+</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>
+
