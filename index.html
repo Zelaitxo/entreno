@@ -5,33 +5,35 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Entreno Urbión 2027</title>
 <meta name="description" content="Seguimiento diario, entreno con vatios y menú para la BTT Urbión 2027.">
-<meta name="theme-color" content="#1f5f45">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Entreno">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
 /* Layout: cuaderno de entrenamiento móvil — cabecera con fase y cuenta atrás, pestañas, tarjetas de sesión con zonas de potencia */
 :root{
-  --bg:#f3f5f2; --surface:#ffffff; --surface-2:#e8ece6; --fg:#16201b; --muted:#5a6a61; --line:#d3dad3;
-  --pine:#1f5f45; --pine-soft:#dcebe2; --ember:#c8641c;
-  --z1:#8a968f; --z2:#2f7fc1; --z3:#3c9a5f; --z4:#d9932a; --z5:#cf4a3c;
-  --ok:#2e8b57; --warn:#b7791f;
-  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
-  --body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --bg:#f7f7f5; --surface:#ffffff; --surface-2:#f1f2f5; --fg:#0e1220; --muted:#667085; --line:#e6e8ec;
+  --pine:#4f46e5; --pine-soft:#eef0ff; --ember:#ff5a1f;
+  --z1:#94a3b8; --z2:#0ea5e9; --z3:#22c55e; --z4:#f59e0b; --z5:#ef4444;
+  --ok:#16a34a; --warn:#d97706;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
+  --mono:"Space Grotesk",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1512; --surface:#18211c; --surface-2:#212c26; --fg:#e6ede8; --muted:#94a59b; --line:#2c3a33;
-  --pine:#5cc495; --pine-soft:#1d3a2d; --ember:#f08a3e;
-  --z1:#7d8a83; --z2:#5aa6e6; --z3:#5cc485; --z4:#f0b04a; --z5:#f07062; --ok:#5cc485; --warn:#f0b04a; color-scheme:dark}}
+  --bg:#0b0d12; --surface:#151922; --surface-2:#1e2330; --fg:#f2f4f8; --muted:#98a2b3; --line:#262c3a;
+  --pine:#818cf8; --pine-soft:#22264a; --ember:#ff7a45;
+  --z1:#94a3b8; --z2:#38bdf8; --z3:#4ade80; --z4:#fbbf24; --z5:#f87171; --ok:#4ade80; --warn:#fbbf24; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1512; --surface:#18211c; --surface-2:#212c26; --fg:#e6ede8; --muted:#94a59b; --line:#2c3a33;
-  --pine:#5cc495; --pine-soft:#1d3a2d; --ember:#f08a3e;
-  --z1:#7d8a83; --z2:#5aa6e6; --z3:#5cc485; --z4:#f0b04a; --z5:#f07062; --ok:#5cc485; --warn:#f0b04a; color-scheme:dark}
+  --bg:#0b0d12; --surface:#151922; --surface-2:#1e2330; --fg:#f2f4f8; --muted:#98a2b3; --line:#262c3a;
+  --pine:#818cf8; --pine-soft:#22264a; --ember:#ff7a45;
+  --z1:#94a3b8; --z2:#38bdf8; --z3:#4ade80; --z4:#fbbf24; --z5:#f87171; --ok:#4ade80; --warn:#fbbf24; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:720px;margin:0 auto;padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
@@ -151,31 +153,58 @@ table.cmp{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--m
 .ph.now{outline:2px solid var(--pine)}
 @media (max-width:420px){.macros{grid-template-columns:repeat(2,1fr)}h1{font-size:26px}}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+
+/* ---- rediseño: limpio, barra inferior, colores vivos ---- */
+body{-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+.wrap{gap:18px;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.02em}
+h2{font-size:21px}h3{font-size:18px}
+.lbl{font-size:11px;letter-spacing:.07em;font-weight:700}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card{border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.03)}
+.note{border-radius:14px}
+.btn,.daynav button{border-radius:12px;font-weight:600;border-color:var(--line)}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.25)}
+.daynav button{width:42px;height:42px;padding:0;font-size:20px;border-radius:50%;display:grid;place-items:center}
+.stat,.macro,.tile{border-radius:14px}
+.stat .num{font-size:22px;font-weight:700}
+.pill{background:var(--pine-soft);color:var(--pine);font-weight:700}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.brand .eyebrow{font-size:12px;font-weight:600;color:var(--muted)}
+.brand h1{font-size:28px;line-height:1.05}
+.countchip{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:78px;padding:10px 12px;border-radius:18px;background:linear-gradient(135deg,var(--ember),#ff2e63);color:#fff;box-shadow:0 8px 20px rgba(255,90,31,.28)}
+.countchip b{font-size:28px;line-height:1;font-weight:700}
+.countchip span{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.92}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(16px);backdrop-filter:saturate(1.6) blur(16px);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabbar button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font:600 10.5px var(--body);cursor:pointer;min-height:52px;min-width:0}
+.tabbar .ic{display:grid;place-items:center;width:52px;height:30px;border-radius:999px;transition:background .2s}
+.tabbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{color:var(--pine)}
+.tabbar button[aria-selected="true"] .ic{background:var(--pine-soft)}
+.hero .big{font-size:44px;font-weight:700;line-height:1;color:var(--fg)}
+.hero .big small{font-size:16px;color:var(--muted);font-weight:600}
+.session{border-left-width:4px;border-radius:2px}
+.status.done{background:var(--ok);border-color:var(--ok)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div>
-      <div class="lbl">Temporada 2027 · Josu</div>
-      <h1>Plan Urbión 2027</h1>
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Josu · Temporada 2027</span>
+      <h1>BTT Urbión</h1>
       <span class="pill" id="phasePill">Fase</span>
     </div>
-    <div class="count"><b class="num" id="daysLeft">–</b><div class="lbl">días a BTT Urbión*</div></div>
+    <div class="countchip" aria-label="Días hasta la carrera"><b class="num" id="daysLeft">–</b><span>días</span></div>
   </header>
-
-  <nav class="tabs" role="tablist">
-    <button role="tab" id="tab-hoy" aria-selected="true" data-v="hoy">Hoy</button>
-    <button role="tab" id="tab-semana" aria-selected="false" data-v="semana">Semana</button>
-    <button role="tab" id="tab-fuerza" aria-selected="false" data-v="fuerza">Fuerza</button>
-    <button role="tab" id="tab-mes" aria-selected="false" data-v="mes">Mes</button>
-    <button role="tab" id="tab-progreso" aria-selected="false" data-v="progreso">Progreso</button>
-  </nav>
 
   <main id="view"></main>
   <p class="save" id="saveState">Cargando tus datos…</p>
   <p class="save">* Fecha estimada (19 jun 2027) hasta que la organización publique el calendario. Zonas de potencia según Coggan, % de FTP.</p>
 </div>
+<nav class="tabbar" aria-label="Secciones"><div class="in" role="tablist"><button role="tab" data-v="hoy" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>Día</button><button role="tab" data-v="semana" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Semana</button><button role="tab" data-v="mes" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>Calendario</button><button role="tab" data-v="progreso" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Progreso</button><button role="tab" data-v="fuerza" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg></span>Fuerza</button><button role="tab" data-v="dieta" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5c-1.6-2-4.6-2.3-6.4-.4-2.1 2.2-1.6 6.6.6 10.1 1.8 2.8 3.9 3.4 5.8 2.4 1.9 1 4 .4 5.8-2.4 2.2-3.5 2.7-7.9.6-10.1-1.8-1.9-4.8-1.6-6.4.4z"/><path d="M12 7.5c0-2.2 1.1-3.8 3.2-4.5"/></svg></span>Dieta</button></div></nav>
 
 <script>
 (function(){
@@ -336,7 +365,7 @@ function dow(k){return (parse(k).getDay()+6)%7}
 function diffDays(a,b){return Math.round((parse(b)-parse(a))/864e5)}
 function monday(k){return addDays(k,-dow(k))}
 function phaseOf(k){return PHASES.find(p=>k>=p.from&&k<=p.to)||(k<PHASES[0].from?PHASES[0]:PHASES[PHASES.length-1])}
-function longDate(k){return parse(k).toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"})}
+function longDate(k){const t=parse(k).toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});return t.charAt(0).toUpperCase()+t.slice(1)}
 
 // ---------- plan del día ----------
 const OV = {
@@ -453,7 +482,7 @@ function renderHoy(){
   const p = planFor(cur), t = targets(p), L = getLog(cur), menu = MENUS[t.lv];
   const ph = phaseOf(cur);
   let h = '<div style="display:flex;flex-direction:column;gap:16px">';
-  h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
+  h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
   if(cur!==todayKey()) h+='<button class="btn" id="goToday" style="align-self:center">Volver a hoy</button>';
   if(IV.id&&IV.key) h+='<div class="row" style="justify-content:center;gap:10px"><button class="btn" id="syncBtn">Sincronizar con intervals.icu</button><span class="muted" id="syncMsg" style="font-size:12px">'+esc(syncNote)+'</span></div>';
   // sesión
@@ -481,20 +510,15 @@ function renderHoy(){
   h += '<label class="f">Hambre o ansiedad<select id="hambre"><option value="">–</option>'+["1 · Nada","2 · Poca","3 · Normal","4 · Bastante","5 · Mucha"].map((o,i)=>'<option value="'+(i+1)+'"'+(L.hambre===i+1?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
   h += '<label class="f">Sensación<select id="sens"><option value="">–</option>'+["Muy bien","Bien","Normal","Cansado","Muy cansado"].map(o=>'<option'+(L.sens===o?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
   h += '</div><label class="f">Notas<textarea id="notas" placeholder="Molestias, tiempo, ruta…">'+esc(L.notas||"")+'</textarea></label></section>';
-  // nutrición
-  h += '<section class="card"><div class="row between"><span class="lbl">Nutrición · '+menu.name+'</span><span class="num muted">'+t.kcal+' kcal</span></div>';
-  h += '<div class="macros"><div class="macro"><span class="num">'+t.c+' g</span><span class="lbl">Hidratos</span></div><div class="macro"><span class="num">'+t.pr+' g</span><span class="lbl">Proteína</span></div><div class="macro"><span class="num">'+t.fa+' g</span><span class="lbl">Grasa</span></div><div class="macro"><span class="num">'+t.cho+'</span><span class="lbl">g HC/kg</span></div></div>';
-  h += macroBar(t);
-  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+MEAL_ICON(m[0])+' '+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
-  h += '<div class="note"><b style="color:var(--fg)">'+(t.lv==="bajo"?"Día de déficit suave.":"Día de comer para entrenar.")+'</b> '+(t.lv==="bajo"?"Aquí es donde se pierde la grasa: menos hidratos, la misma proteína y mucho volumen de verdura.":"Hoy no se recorta: comer antes, durante y después del entreno evita el hambre voraz de la noche y protege el músculo.")+'</div>';
-  h += '<details class="note"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Si aprieta el hambre o la ansiedad</summary><ul style="margin:8px 0 0;padding-left:18px"><li>Primero un vaso de agua o un café o té, y espera 10 minutos.</li><li>Tentempiés que llenan mucho: fruta, skyr, huevo cocido, zanahoria o pepino con hummus, un caldo o palomitas hechas en casa.</li><li>Proteína en todas las comidas (30–40 g). Es lo que más sacia.</li><li>No pases más de 4 horas sin comer, sobre todo antes del rodillo.</li><li>Duerme 7–9 h: dormir poco dispara el hambre al día siguiente.</li><li>Nada está prohibido: 1–2 caprichos planificados a la semana. Las dietas rígidas acaban en atracones más a menudo que las flexibles.</li></ul></details>';
-  h += '<div class="note">Proteína a 2,2 g/kg repartida en 4–5 tomas, más la fuerza semanal, para ganar o mantener músculo mientras pierdes grasa. Ritmo objetivo: 0,3–0,4 kg por semana. Más rápido se pierde músculo y rendimiento.</div>';
-  h += '</section></div>';
+  // dieta (resumen; el menú completo está en la pestaña Dieta)
+  h += '<section class="card"><div class="row between"><span class="lbl">Dieta de hoy · '+esc(menu.name)+'</span><span class="num" style="font-weight:700;font-size:17px">'+t.kcal+' kcal</span></div>'+macroBar(t)+'<button class="btn primary" id="toDieta">Ver el menú del día</button></section>';
+  h += '</div>';
   $view.innerHTML = h;
   const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn)};
   on("prev","click",()=>{cur=addDays(cur,-1);render()});
   on("next","click",()=>{cur=addDays(cur,1);render()});
   on("goToday","click",()=>{cur=todayKey();render()});
+  on("toDieta","click",()=>setView("dieta"));
   on("syncBtn","click",()=>syncIV(false));
   $view.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>loadDetail(cur,+b.dataset.load));
   on("toStr","click",()=>setView("fuerza"));
@@ -554,7 +578,7 @@ function renderFuerza(){
   const k = strDateFor(cur), ph=phaseOf(k), s=STR[ph.id], L=getLog(k), sl=L.str||{};
   const prevK = addDays(k,-7), P=(getLog(prevK).str)||{};
   let h='<div style="display:flex;flex-direction:column;gap:16px">';
-  h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(k)+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
+  h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2>'+longDate(k)+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
   h+='<section class="card"><h3>'+esc(s.title)+'</h3><div class="note">'+esc(s.note)+'</div>';
   h+='<div class="note"><b style="color:var(--fg)">Calentamiento (5\')</b>: 2\' de bici o comba, 10 sentadillas sin peso, 10 puentes de glúteo y 10 separaciones de goma. Después, una serie ligera del primer ejercicio.</div>';
   h+='<div>'+s.ex.map((e,i)=>{const x=sl[i]||{},pv=(P[i]||{}).kg;return '<div class="ex"><input type="checkbox" data-ex="'+i+'" '+(x.done?"checked":"")+' aria-label="'+esc(e[0])+' hecho"><div style="min-width:0"><div style="font-weight:500">'+esc(e[0])+'</div><div class="sets">'+esc(e[1])+'</div>'+(e[2]?'<div class="exfig" role="img" aria-label="Movimiento: '+esc(e[0])+'"><img src="img/ex/'+e[2]+'_0.jpg" alt="" loading="lazy"><img src="img/ex/'+e[2]+'_1.jpg" alt="" loading="lazy"></div>':'')+(e[3]?'<div class="cue">'+esc(e[3])+'</div>':'')+(e[4]?'<div class="kit">'+esc(e[4])+'</div>':'')+(pv?'<div class="muted" style="font-size:12px">Semana pasada: '+pv+' kg</div>':'')+'</div><label class="f" style="font-size:11px">kg<input type="number" step="0.5" data-kg="'+i+'" inputmode="decimal" value="'+(x.kg??"")+'"></label></div>'}).join("")+'</div>';
@@ -662,15 +686,15 @@ function graficosHTML(){
 
 function MEAL_ICON(n){const k=n.toLowerCase();return k.startsWith("desayuno")?"🍳":k.startsWith("media")?"🍎":k.startsWith("comida")?"🥗":k.startsWith("merienda")?"🥛":k.startsWith("pre")?"🍌":k.startsWith("durante")?"💧":k.startsWith("recuper")?"🥤":k.startsWith("cena")?"🐟":k.startsWith("antes")?"🌙":"🍽️"}
 function macroBar(t){const kc=(t.c*4+t.pr*4+t.fa*9)||1;const a=t.c*4/kc*100,b=t.pr*4/kc*100,c=t.fa*9/kc*100;
-  return '<div class="mbar" role="img" aria-label="Reparto de calorías"><span style="width:'+a.toFixed(1)+'%;background:var(--ember)"></span><span style="width:'+b.toFixed(1)+'%;background:var(--pine)"></span><span style="width:'+c.toFixed(1)+'%;background:#d8b04a"></span></div>'
-   +'<div class="mleg"><span><i style="background:var(--ember)"></i>Hidratos '+Math.round(a)+'%</span><span><i style="background:var(--pine)"></i>Proteína '+Math.round(b)+'%</span><span><i style="background:#d8b04a"></i>Grasa '+Math.round(c)+'%</span></div>';}
+  return '<div class="mbar" role="img" aria-label="Reparto de calorías"><span style="width:'+a.toFixed(1)+'%;background:var(--ember)"></span><span style="width:'+b.toFixed(1)+'%;background:var(--pine)"></span><span style="width:'+c.toFixed(1)+'%;background:#f59e0b"></span></div>'
+   +'<div class="mleg"><span><i style="background:var(--ember)"></i>Hidratos '+Math.round(a)+'%</span><span><i style="background:var(--pine)"></i>Proteína '+Math.round(b)+'%</span><span><i style="background:#f59e0b"></i>Grasa '+Math.round(c)+'%</span></div>';}
 function renderMes(){
   const first=cur.slice(0,8)+"01", mon0=monday(first), mRef=first.slice(0,7);
   let planM=0, doneM=0, cells="";
   for(let i=0;i<42;i++){
     const k=addDays(mon0,i), inM=k.slice(0,7)===mRef, p=planFor(k), L=getLog(k);
     if(inM){planM+=p.m||0; if(L.done) doneM+=p.m||0;}
-    const bg = (p.kind==="rest"||!p.m) ? "var(--surface-2)" : p.kind==="str" ? "rgba(200,100,28,.22)" : (p.z==="Z3"||p.z==="SS") ? "rgba(214,176,74,.30)" : (p.z==="Z4"||p.z==="Z5") ? "rgba(200,100,28,.38)" : "rgba(31,95,69,.18)";
+    const bg = (p.kind==="rest"||!p.m) ? "var(--surface-2)" : p.kind==="str" ? "rgba(255,90,31,.16)" : (p.z==="Z3"||p.z==="SS") ? "rgba(245,158,11,.22)" : (p.z==="Z4"||p.z==="Z5") ? "rgba(239,68,68,.22)" : "rgba(14,165,233,.16)";
     cells+='<button class="md'+(inM?"":" out")+(k===todayKey()?" today":"")+'" data-k="'+k+'" style="background:'+bg+'" aria-label="'+esc(longDate(k))+'"><span class="n">'+parse(k).getDate()+((L.acts&&L.acts.length)?' <span class="sy" title="Subido desde intervals.icu">●</span>':L.done?' <span class="ck">✓</span>':'')+'</span><span class="mins">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"")+'</span></button>';
   }
   const mName=parse(first).toLocaleDateString("es-ES",{month:"long",year:"numeric"}).replace(/ De /g," de ");
@@ -678,7 +702,7 @@ function renderMes(){
   h+='<div class="daynav"><button id="mp" aria-label="Mes anterior">‹</button><div style="text-align:center"><div class="lbl">Calendario</div><h2>'+mName.charAt(0).toUpperCase()+mName.slice(1)+'</h2></div><button id="mn" aria-label="Mes siguiente">›</button></div>';
   h+='<div class="stats"><div class="stat"><span class="num">'+(planM/60).toFixed(1)+' h</span><span class="lbl">Planificado</span></div><div class="stat"><span class="num">'+(doneM/60).toFixed(1)+' h</span><span class="lbl">Hecho</span></div><div class="stat"><span class="num">'+(planM?Math.round(doneM/planM*100):0)+'%</span><span class="lbl">Cumplido</span></div></div>';
   h+='<section class="card"><div class="mes-head">'+DOW.map(d=>'<span>'+d+'</span>').join("")+'</div><div class="mes-grid">'+cells+'</div>';
-  h+='<div class="mleg" style="margin-top:12px"><span><i style="background:rgba(31,95,69,.5)"></i>Z2 / fondo</span><span><i style="background:rgba(214,176,74,.7)"></i>Tempo / sweet spot</span><span><i style="background:rgba(200,100,28,.6)"></i>Umbral, test o fuerza</span><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Descanso</span><span><b class="sy">●</b> subido solo</span><span><b class="ck">✓</b> marcado a mano</span></div></section></div>';
+  h+='<div class="mleg" style="margin-top:12px"><span><i style="background:rgba(14,165,233,.75)"></i>Z2 / fondo</span><span><i style="background:rgba(245,158,11,.85)"></i>Tempo / sweet spot</span><span><i style="background:rgba(255,90,31,.8)"></i>Umbral, test o fuerza</span><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Descanso</span><span><b class="sy">●</b> subido solo</span><span><b class="ck">✓</b> marcado a mano</span></div></section></div>';
   $view.innerHTML=h;
   const shift=n=>{const d=parse(first);d.setMonth(d.getMonth()+n);cur=fmt(d);render()};
   document.getElementById("mp").onclick=()=>shift(-1);
@@ -821,14 +845,33 @@ async function syncIV(auto){
   render();
 }
 
+function renderDieta(){
+  const p = planFor(cur), t = targets(p), L = getLog(cur), menu = MENUS[t.lv], ph = phaseOf(cur);
+  let h = '<div style="display:flex;flex-direction:column;gap:16px">';
+  h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(p.t)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
+  h += '<section class="card hero"><span class="lbl">Objetivo del día</span><div class="big num">'+t.kcal+'<small> kcal</small></div><div class="muted" style="font-size:14px">'+esc(menu.name)+'</div></section>';
+  h += '<section class="card"><div class="row between"><span class="lbl">Nutrición · '+menu.name+'</span><span class="num muted">'+t.kcal+' kcal</span></div>';
+  h += '<div class="macros"><div class="macro"><span class="num">'+t.c+' g</span><span class="lbl">Hidratos</span></div><div class="macro"><span class="num">'+t.pr+' g</span><span class="lbl">Proteína</span></div><div class="macro"><span class="num">'+t.fa+' g</span><span class="lbl">Grasa</span></div><div class="macro"><span class="num">'+t.cho+'</span><span class="lbl">g HC/kg</span></div></div>';
+  h += macroBar(t);
+  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+MEAL_ICON(m[0])+' '+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
+  h += '<div class="note"><b style="color:var(--fg)">'+(t.lv==="bajo"?"Día de déficit suave.":"Día de comer para entrenar.")+'</b> '+(t.lv==="bajo"?"Aquí es donde se pierde la grasa: menos hidratos, la misma proteína y mucho volumen de verdura.":"Hoy no se recorta: comer antes, durante y después del entreno evita el hambre voraz de la noche y protege el músculo.")+'</div>';
+  h += '<details class="note"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Si aprieta el hambre o la ansiedad</summary><ul style="margin:8px 0 0;padding-left:18px"><li>Primero un vaso de agua o un café o té, y espera 10 minutos.</li><li>Tentempiés que llenan mucho: fruta, skyr, huevo cocido, zanahoria o pepino con hummus, un caldo o palomitas hechas en casa.</li><li>Proteína en todas las comidas (30–40 g). Es lo que más sacia.</li><li>No pases más de 4 horas sin comer, sobre todo antes del rodillo.</li><li>Duerme 7–9 h: dormir poco dispara el hambre al día siguiente.</li><li>Nada está prohibido: 1–2 caprichos planificados a la semana. Las dietas rígidas acaban en atracones más a menudo que las flexibles.</li></ul></details>';
+  h += '<div class="note">Proteína a 2,2 g/kg repartida en 4–5 tomas, más la fuerza semanal, para ganar o mantener músculo mientras pierdes grasa. Ritmo objetivo: 0,3–0,4 kg por semana. Más rápido se pierde músculo y rendimiento.</div>';
+  h += '</section></div>';
+  $view.innerHTML = h;
+  document.getElementById("prev").onclick=()=>{cur=addDays(cur,-1);render()};
+  document.getElementById("next").onclick=()=>{cur=addDays(cur,1);render()};
+  $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr})}));
+}
+
 function render(){
   const ph = phaseOf(todayKey());
   document.getElementById("phasePill").textContent = ph.name;
   document.getElementById("daysLeft").textContent = Math.max(0,diffDays(todayKey(),RACE));
-  ({hoy:renderHoy,semana:renderSemana,fuerza:renderFuerza,progreso:renderProgreso,mes:renderMes})[view]();
+  ({hoy:renderHoy,semana:renderSemana,fuerza:renderFuerza,progreso:renderProgreso,mes:renderMes,dieta:renderDieta})[view]();
 }
-function setView(v){view=v;document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v?"true":"false"));render();window.scrollTo(0,0)}
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+function setView(v){view=v;document.querySelectorAll(".tabbar button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v?"true":"false"));render();window.scrollTo(0,0)}
+document.querySelectorAll(".tabbar button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
 
 // ---------- carga local inmediata ----------
 (function loadLocal(){
