@@ -86,7 +86,7 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .bar{height:6px;border-radius:3px;background:var(--z2)}
 .status{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--bg)}
 .status.done{background:var(--ok);border-color:var(--ok)}
-.ex{display:grid;grid-template-columns:auto 1fr 84px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ex{display:grid;grid-template-columns:auto 1fr 84px;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
 .ex:first-of-type{border-top:0}
 .ex input[type=checkbox]{width:22px;height:22px;accent-color:var(--ember)}
 .ex .sets{font-family:var(--mono);font-size:13px;color:var(--ember)}
@@ -95,6 +95,14 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .stat{background:var(--surface-2);border-radius:8px;padding:10px;text-align:center}
 .stat .num{font-size:20px;display:block}
 .chart{overflow-x:auto}
+.exfig{position:relative;width:100%;max-width:320px;aspect-ratio:3/2;background:#fff;border-radius:8px;overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
+.exfig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.exfig img:last-child{animation:exswap 2.6s ease-in-out infinite}
+@keyframes exswap{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.exfig img:last-child{animation:none;opacity:0}}
+.cue{font-size:13px;color:var(--fg);line-height:1.45;margin-top:2px}
+.kit{font-size:12px;color:var(--muted);margin-top:4px}
+.kit::before{content:"Material: "}
 .sy{color:var(--z2);font-weight:700}
 .synced{background:var(--surface-2);color:var(--z2);font-weight:600;border-radius:8px;padding:10px 12px;font-size:14px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
@@ -225,17 +233,59 @@ const Q = {
        sun:{t:"Rodaje Z2",m:90,z:"Z2",zones:["Z2"],d:"1h30 suave."}}
 };
 
+// [nombre, series, imagen, cómo se hace, material]
+const CUE = {
+  goblet:"Mancuerna o saco pegado al pecho, pies a la anchura de los hombros. Baja como si te sentaras entre los talones, con el pecho alto y las rodillas hacia fuera. Sube empujando el suelo.",
+  rdl:"Rodillas algo flexionadas y fijas. Lleva la cadera hacia atrás deslizando la barra pegada a los muslos hasta notar tensión detrás de la pierna. Espalda recta en todo momento.",
+  bulg:"Pie de atrás sobre una silla o el sofá. Baja en vertical hasta que el muslo de delante quede paralelo al suelo. Es el ejercicio clave: en la bici empujas con una pierna cada vez.",
+  row:"Mano y rodilla apoyadas en una silla, espalda plana. Tira de la mancuerna hacia la cadera, no hacia el hombro.",
+  step:"Sube a una silla firme o un escalón alto empujando solo con la pierna de arriba, sin impulsarte con la de abajo. Baja controlando.",
+  pallof:"Goma atada a la altura del pecho y tú de lado. Estira los brazos al frente sin dejar que te gire: el abdomen frena la rotación, como en las zonas técnicas del MTB.",
+  side:"Codo bajo el hombro y cuerpo en línea. Si cuesta, apoya las rodillas.",
+  jump:"Baja a media sentadilla y salta todo lo alto que puedas. Aterriza suave con las rodillas flexionadas y descansa 3\" entre saltos.",
+  pull:"Brazos estirados al frente: abre la goma hasta el pecho juntando las escápulas. Compensa la postura encorvada de la bici."
+};
 const STR = {
-  reinc:{title:"Adaptación",note:"Vuelves tras meses parado: pesos con los que te sobren 3 repeticiones. Las dos primeras semanas, 2 series en vez de 3. Agujetas fuertes = demasiado peso. Descansa 90\".",ex:[
-    ["Sentadilla goblet","3×12"],["Peso muerto rumano con mancuernas","3×10"],["Zancada atrás","3×8 por pierna"],["Puente de glúteo","3×15"],["Remo con mancuerna","3×10"],["Plancha + plancha lateral","3×30\""]]},
-  base1:{title:"Fuerza base",note:"Sube el peso: 4×6–8 dejando 2 repeticiones en reserva. Descansa 2'.",ex:[
-    ["Sentadilla (goblet o barra)","3×10"],["Peso muerto rumano","3×10"],["Zancada búlgara","3×8 por pierna"],["Hip thrust","3×12"],["Remo con mancuerna","3×10"],["Plancha + Pallof press","3×40\" / 2×12"]]},
-  base2:{title:"Fuerza máxima",note:"Cargas pesadas (4–6 repeticiones, últimas duras). Es el tipo de fuerza que mejora la economía de pedaleo (Rønnestad y Mujika 2014). Descansa 2–3'.",ex:[
-    ["Sentadilla","4×5"],["Peso muerto rumano","4×6"],["Zancada búlgara","3×6 por pierna"],["Step-up con peso","3×6 por pierna"],["Remo","3×8"],["Core antirrotación","3×30\""]]},
-  build:{title:"Mantenimiento y potencia",note:"Mismo peso que en base 2, menos series. La subida, rápida y controlada. Mantener la fuerza cuesta mucho menos que ganarla.",ex:[
-    ["Sentadilla explosiva","3×4"],["Peso muerto rumano","3×5"],["Zancada búlgara","2×6 por pierna"],["Saltos al cajón","3×5"],["Core","2×40\""]]},
+  reinc:{title:"Adaptación",note:"Vuelves tras meses parado. Semanas 1 y 2: 2 series por ejercicio; después, 3. Elige un peso con el que te sobren 3 repeticiones. Descansa 60–90\". Si tienes agujetas fuertes, era demasiado peso.",ex:[
+    ["Sentadilla goblet","3×10–12","Goblet_Squat",CUE.goblet,"1 mancuerna o el saco de 5 kg"],
+    ["Peso muerto rumano","3×10","Romanian_Deadlift",CUE.rdl,"Barra Z"],
+    ["Zancada atrás","2–3×8 por pierna","Dumbbell_Rear_Lunge","Da un paso largo atrás y baja la rodilla de atrás casi hasta el suelo. El peso va en el talón de delante. Vuelve empujando con esa pierna.","2 mancuernas"],
+    ["Puente de glúteo a una pierna","3×10 por pierna","Single_Leg_Glute_Bridge","Tumbado, un pie en el suelo y la otra pierna estirada. Sube la cadera apretando el glúteo hasta alinear rodilla, cadera y hombro. Pausa de 1\" arriba.","Peso corporal"],
+    ["Remo con mancuerna a una mano","3×10 por brazo","One-Arm_Dumbbell_Row",CUE.row,"1 mancuerna"],
+    ["Flexiones","3×8–12","Pushups","Cuerpo en línea de la cabeza a los talones y codos a 45° del cuerpo. Si no salen 8, apoya las manos en una mesa.","Peso corporal"],
+    ["Plancha","3×30\"","Plank","Antebrazos bajo los hombros. Aprieta glúteos y abdomen como si te fueran a dar un golpe, sin dejar que se hunda la cadera.","Peso corporal"]]},
+  base1:{title:"Fuerza base",note:"3 series de 8–10 dejando 2 repeticiones en reserva. Baja en 3 segundos: ir lento compensa no tener mucho peso. Descansa entre 90\" y 2'.",ex:[
+    ["Sentadilla goblet lenta","3×8–10 · bajada en 3\"",
+     "Goblet_Squat",CUE.goblet+" Pausa de 1\" abajo.","La mancuerna más pesada"],
+    ["Peso muerto rumano","3×8","Romanian_Deadlift",CUE.rdl,"Barra Z con discos"],
+    ["Sentadilla búlgara","3×8 por pierna","Split_Squat_with_Dumbbells",CUE.bulg,"2 mancuernas"],
+    ["Hip thrust","3×12","Barbell_Hip_Thrust","Espalda alta apoyada en el sofá y la barra Z o el saco sobre la cadera, con una toalla debajo. Sube hasta que el tronco quede horizontal y aprieta los glúteos 1\".","Barra Z o saco de 5 kg"],
+    ["Remo inclinado con barra Z","3×10","Bent_Over_Barbell_Row","Inclina el tronco a 45° con la espalda recta. Lleva la barra al ombligo juntando las escápulas.","Barra Z"],
+    ["Press de hombros","3×10","Dumbbell_Shoulder_Press","Sentado o de pie, con el abdomen firme. Sube las mancuernas sin arquear la zona lumbar.","2 mancuernas"],
+    ["Pallof press","3×10 por lado","Pallof_Press",CUE.pallof,"Goma"],
+    ["Plancha lateral","2×30\" por lado","Side_Bridge",CUE.side,"Peso corporal"]]},
+  base2:{title:"Fuerza máxima",note:"Lo más pesado que tengas, 4–6 repeticiones dejando 1 o 2 en reserva. Con poco peso en casa, trabaja a una pierna: así cada pierna carga el doble. Esta fuerza pesada mejora la economía de pedaleo (Rønnestad y Mujika, 2014). Descansa 2–3'.",ex:[
+    ["Sentadilla búlgara pesada","4×5–6 por pierna","Split_Squat_with_Dumbbells",CUE.bulg,"Las mancuernas más pesadas"],
+    ["Peso muerto rumano","4×6","Romanian_Deadlift",CUE.rdl,"Barra Z cargada al máximo"],
+    ["Step-up con mancuernas","3×6 por pierna","Dumbbell_Step_Ups",CUE.step,"2 mancuernas"],
+    ["Hip thrust a una pierna","3×8 por pierna","Single_Leg_Glute_Bridge","Como el puente a una pierna, pero con la espalda alta apoyada en el sofá y una mancuerna sobre la cadera.","1 mancuerna"],
+    ["Remo con mancuerna a una mano","3×8 por brazo","One-Arm_Dumbbell_Row",CUE.row,"1 mancuerna"],
+    ["Flexiones con saco","3×6–8","Pushups","El saco de 5 kg sobre la espalda alta y el cuerpo en línea.","Saco de 5 kg"],
+    ["Paseo del granjero","3×40 m","Farmers_Walk","Una mancuerna pesada en cada mano. Camina erguido, con pasos cortos y los hombros abajo. Refuerza el agarre y el tronco para el MTB.","2 mancuernas"],
+    ["Dead bug","3×8 por lado","Dead_Bug","Tumbado, brazos y rodillas a 90°. Estira el brazo y la pierna contrarios sin despegar la zona lumbar del suelo.","Peso corporal"]]},
+  build:{title:"Mantenimiento y potencia",note:"El mismo peso que en fuerza máxima, pero menos series: mantener cuesta mucho menos que ganar. Sube rápido y baja controlado. Haz los saltos al principio, cuando estás fresco.",ex:[
+    ["Sentadilla con salto","3×5","Freehand_Jump_Squat",CUE.jump,"Peso corporal"],
+    ["Sentadilla búlgara","2×5 por pierna","Split_Squat_with_Dumbbells",CUE.bulg+" Subida rápida, bajada en 2\".","2 mancuernas"],
+    ["Peso muerto rumano","2×6","Romanian_Deadlift",CUE.rdl,"Barra Z"],
+    ["Step-up explosivo","2×5 por pierna","Dumbbell_Step_Ups",CUE.step+" Sube rápido, como un arrancón en una rampa.","2 mancuernas ligeras"],
+    ["Remo con mancuerna a una mano","2×8 por brazo","One-Arm_Dumbbell_Row",CUE.row,"1 mancuerna"],
+    ["Separación de goma","2×15","Band_Pull_Apart",CUE.pull,"Goma"],
+    ["Pallof press","2×10 por lado","Pallof_Press",CUE.pallof,"Goma"]]},
   spec:null, peak:{title:"Mantenimiento ligero",note:"Solo hasta 10 días antes de la carrera. Después, nada de fuerza.",ex:[
-    ["Sentadilla","2×3"],["Saltos al cajón","2×5"],["Core","2×30\""]]}
+    ["Sentadilla con salto","2×4","Freehand_Jump_Squat",CUE.jump,"Peso corporal"],
+    ["Sentadilla búlgara","2×4 por pierna","Split_Squat_with_Dumbbells",CUE.bulg,"2 mancuernas"],
+    ["Separación de goma","2×15","Band_Pull_Apart",CUE.pull,"Goma"],
+    ["Plancha lateral","2×30\" por lado","Side_Bridge",CUE.side,"Peso corporal"]]}
 };
 STR.spec = STR.build; STR.pre = STR.reinc;
 
@@ -506,8 +556,9 @@ function renderFuerza(){
   let h='<div style="display:flex;flex-direction:column;gap:16px">';
   h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2 style="text-transform:capitalize">'+longDate(k)+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
   h+='<section class="card"><h3>'+esc(s.title)+'</h3><div class="note">'+esc(s.note)+'</div>';
-  h+='<div class="note">Calentamiento: 5\' de bici o comba + 2 series ligeras del primer ejercicio.</div>';
-  h+='<div>'+s.ex.map((e,i)=>{const x=sl[i]||{},pv=(P[i]||{}).kg;return '<div class="ex"><input type="checkbox" data-ex="'+i+'" '+(x.done?"checked":"")+' aria-label="'+esc(e[0])+' hecho"><div style="min-width:0"><div style="font-weight:500">'+esc(e[0])+'</div><div class="sets">'+esc(e[1])+'</div>'+(pv?'<div class="muted" style="font-size:12px">Semana pasada: '+pv+' kg</div>':'')+'</div><label class="f" style="font-size:11px">kg<input type="number" step="0.5" data-kg="'+i+'" inputmode="decimal" value="'+(x.kg??"")+'"></label></div>'}).join("")+'</div>';
+  h+='<div class="note"><b style="color:var(--fg)">Calentamiento (5\')</b>: 2\' de bici o comba, 10 sentadillas sin peso, 10 puentes de glúteo y 10 separaciones de goma. Después, una serie ligera del primer ejercicio.</div>';
+  h+='<div>'+s.ex.map((e,i)=>{const x=sl[i]||{},pv=(P[i]||{}).kg;return '<div class="ex"><input type="checkbox" data-ex="'+i+'" '+(x.done?"checked":"")+' aria-label="'+esc(e[0])+' hecho"><div style="min-width:0"><div style="font-weight:500">'+esc(e[0])+'</div><div class="sets">'+esc(e[1])+'</div>'+(e[2]?'<div class="exfig" role="img" aria-label="Movimiento: '+esc(e[0])+'"><img src="img/ex/'+e[2]+'_0.jpg" alt="" loading="lazy"><img src="img/ex/'+e[2]+'_1.jpg" alt="" loading="lazy"></div>':'')+(e[3]?'<div class="cue">'+esc(e[3])+'</div>':'')+(e[4]?'<div class="kit">'+esc(e[4])+'</div>':'')+(pv?'<div class="muted" style="font-size:12px">Semana pasada: '+pv+' kg</div>':'')+'</div><label class="f" style="font-size:11px">kg<input type="number" step="0.5" data-kg="'+i+'" inputmode="decimal" value="'+(x.kg??"")+'"></label></div>'}).join("")+'</div>';
+  h+='<div class="note"><b style="color:var(--fg)">Cómo progresar</b>: cuando completes todas las series en la parte alta de repeticiones y aún te sobren 2, sube el peso. Si no tienes más peso, baja más lento (4\"), haz una pausa abajo o añade 2 repeticiones.</div>';
   h+='<label class="check"><input type="checkbox" id="sdone" '+(L.done?"checked":"")+'> Sesión completada</label>';
   h+='<div class="note">Haz la fuerza separada al menos 6 h de una sesión intensa en bici, o en un día sin bici. Toma 25–35 g de proteína después.</div></section></div>';
   $view.innerHTML=h;

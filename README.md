@@ -19,3 +19,7 @@ Todo se guarda en el propio teléfono. Usa **Semana → Copia de seguridad → E
 
 ## intervals.icu (opcional)
 En intervals.icu: **Settings → Developer → API key** (crea una clave). Tu **ID de atleta** aparece en la misma página (formato `i12345`). Introdúcelos en **Semana → intervals.icu**. Después, en **Hoy → Cargar en el rodillo**, el botón **Enviar a intervals.icu** crea el entreno en tu calendario, y de ahí pasa a Garmin si tienes la conexión activa.
+
+## Créditos
+
+Imágenes de ejercicios: [free-exercise-db](https://github.com/yuhonas/free-exercise-db), de dominio público (Unlicense).
