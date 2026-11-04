@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Entreno Urbión 2027</title>
+<title>Go Hard or Go Home 2027</title>
 <meta name="description" content="Seguimiento diario, entreno con vatios y menú para la BTT Urbión 2027.">
 <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Entreno">
+<meta name="apple-mobile-web-app-title" content="Go Hard 2027">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -189,6 +189,16 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .status.done{background:var(--ok);border-color:var(--ok)}
 .brandrow{display:flex;align-items:center;gap:12px;min-width:0}
 .logo{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 4px 12px rgba(10,11,15,.25)}
+.brand h1{font-size:23px;line-height:1.08}
+.countchip span{text-align:center;line-height:1.15}
+header.top{flex-wrap:nowrap;align-items:center}
+.brandrow{flex:1;min-width:0}
+.brand{min-width:0}
+.brand h1{font-size:20px}
+.brand .eyebrow{font-size:11px}
+.logo{width:52px;height:52px}
+.countchip{min-width:70px;padding:8px 10px;flex:none}
+.countchip b{font-size:24px}
 </style>
 </head>
 <body>
@@ -198,11 +208,11 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
     <img class="logo" src="img/logo.jpg" alt="Asuela" width="56" height="56">
     <div class="brand">
       <span class="eyebrow">Asuela · Josu · Temporada 2027</span>
-      <h1>BTT Urbión</h1>
+      <h1>Go Hard or Go Home 2027</h1>
       <span class="pill" id="phasePill">Fase</span>
     </div>
     </div>
-    <div class="countchip" aria-label="Días hasta la carrera"><b class="num" id="daysLeft">–</b><span>días</span></div>
+    <div class="countchip" aria-label="Días hasta la BTT Urbión"><b class="num" id="daysLeft">–</b><span>días a<br>Urbión</span></div>
   </header>
 
   <main id="view"></main>
