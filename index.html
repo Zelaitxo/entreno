@@ -95,6 +95,19 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .stat{background:var(--surface-2);border-radius:8px;padding:10px;text-align:center}
 .stat .num{font-size:20px;display:block}
 .chart{overflow-x:auto}
+.mbar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:10px 0 6px;background:var(--surface-2)}
+.mbar span{display:block;height:100%}
+.mleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.mleg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.mes-head{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px;color:var(--muted);margin-bottom:6px}
+.mes-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.md{min-height:58px;border-radius:8px;padding:5px 4px;border:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;color:var(--fg);font:inherit}
+.md.out{opacity:.35}
+.md.today{outline:2px solid var(--ember);outline-offset:-2px}
+.md .n{font-family:var(--mono);font-weight:600;font-size:13px}
+.md .mins{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.md .ck{color:var(--pine);font-weight:700}
+
 .save{font-size:12px;color:var(--muted)}
 .phases{display:flex;flex-direction:column;gap:8px}
 .ph{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;border-radius:8px;background:var(--surface-2)}
@@ -118,6 +131,7 @@ input[type=range]{width:100%;accent-color:var(--ember)}
     <button role="tab" id="tab-hoy" aria-selected="true" data-v="hoy">Hoy</button>
     <button role="tab" id="tab-semana" aria-selected="false" data-v="semana">Semana</button>
     <button role="tab" id="tab-fuerza" aria-selected="false" data-v="fuerza">Fuerza</button>
+    <button role="tab" id="tab-mes" aria-selected="false" data-v="mes">Mes</button>
     <button role="tab" id="tab-progreso" aria-selected="false" data-v="progreso">Progreso</button>
   </nav>
 
@@ -223,7 +237,7 @@ const MENUS = {
 
 const IV = {id:"", key:""};
 // ---------- estado ----------
-const DEFAULT_SET = {ftp:195, peso:73, strDay:2, ftpExample:true, v:2};
+const DEFAULT_SET = {ftp:192, peso:73, strDay:2, ftpExample:true, v:3, p20:[{date:"2026-08-04",w:216},{date:"2026-09-26",w:192},{date:"2026-10-01",w:180},{date:"2026-10-05",w:183},{date:"2026-10-14",w:185},{date:"2026-10-30",w:204}]};
 let settings = Object.assign({}, DEFAULT_SET);
 let logs = {};
 let view = "hoy";
@@ -341,7 +355,7 @@ function persist(id,obj){
   lsSet("ep-"+id,obj); const all=lsGet("ep-index")||[]; if(!all.includes(id)){all.push(id);lsSet("ep-index",all)}
   flash("Guardado en este teléfono");
 }
-function migrate(s){ if(!s.v){ if(s.ftpExample && s.ftp===250) s.ftp=195; s.v=2; } return s; }
+function migrate(s){ if(!s.v){ if(s.ftpExample && s.ftp===250) s.ftp=195; s.v=2; } if(s.v<3){ s.ftp=192; s.v=3; } return s; }
 function saveSettings(){ lsSet("ep-settings",settings); }
 function flash(t){document.getElementById("saveState").textContent=t}
 
@@ -388,7 +402,8 @@ function renderHoy(){
   // nutrición
   h += '<section class="card"><div class="row between"><span class="lbl">Nutrición · '+menu.name+'</span><span class="num muted">'+t.kcal+' kcal</span></div>';
   h += '<div class="macros"><div class="macro"><span class="num">'+t.c+' g</span><span class="lbl">Hidratos</span></div><div class="macro"><span class="num">'+t.pr+' g</span><span class="lbl">Proteína</span></div><div class="macro"><span class="num">'+t.fa+' g</span><span class="lbl">Grasa</span></div><div class="macro"><span class="num">'+t.cho+'</span><span class="lbl">g HC/kg</span></div></div>';
-  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
+  h += macroBar(t);
+  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+MEAL_ICON(m[0])+' '+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
   h += '<div class="note"><b style="color:var(--fg)">'+(t.lv==="bajo"?"Día de déficit suave.":"Día de comer para entrenar.")+'</b> '+(t.lv==="bajo"?"Aquí es donde se pierde la grasa: menos hidratos, la misma proteína y mucho volumen de verdura.":"Hoy no se recorta: comer antes, durante y después del entreno evita el hambre voraz de la noche y protege el músculo.")+'</div>';
   h += '<details class="note"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Si aprieta el hambre o la ansiedad</summary><ul style="margin:8px 0 0;padding-left:18px"><li>Primero un vaso de agua o un café o té, y espera 10 minutos.</li><li>Tentempiés que llenan mucho: fruta, skyr, huevo cocido, zanahoria o pepino con hummus, un caldo o palomitas hechas en casa.</li><li>Proteína en todas las comidas (30–40 g). Es lo que más sacia.</li><li>No pases más de 4 horas sin comer, sobre todo antes del rodillo.</li><li>Duerme 7–9 h: dormir poco dispara el hambre al día siguiente.</li><li>Nada está prohibido: 1–2 caprichos planificados a la semana. Las dietas rígidas acaban en atracones más a menudo que las flexibles.</li></ul></details>';
   h += '<div class="note">Proteína a 2,2 g/kg repartida en 4–5 tomas, más la fuerza semanal, para ganar o mantener músculo mientras pierdes grasa. Ritmo objetivo: 0,3–0,4 kg por semana. Más rápido se pierde músculo y rendimiento.</div>';
@@ -505,15 +520,90 @@ function renderProgreso(){
   }
   h+='</section>';
   h+='<section class="card"><span class="lbl">Punto de partida · tu historial de Garmin</span><div class="stats"><div class="stat"><span class="num">~230 W</span><span class="lbl">FTP feb 2026</span></div><div class="stat"><span class="num">~195 W</span><span class="lbl">FTP estimado hoy</span></div><div class="stat"><span class="num">1/sem</span><span class="lbl">Salidas desde julio</span></div></div><p class="muted" style="margin:0">En febrero hacías 5–7 salidas por semana y tu mejor potencia de 20 minutos llegó a 242 W. Entre abril y finales de julio no hay actividad, y desde entonces sales una vez por semana, unos 60–80 minutos, con picos de 20 minutos de 204–216 W. Por eso las 4 primeras semanas suben poco a poco y terminan con un nuevo test.</p></section>';
+  h+=graficosHTML();
   h+='<section class="card"><span class="lbl">Integraciones</span><p class="muted" style="margin:0">De momento el registro es manual. La conexión con intervals.icu (que recoge lo de Garmin) es el siguiente paso; TrainingPeaks no ofrece API a particulares. La báscula Xiaomi/Renpho no tiene conexión directa: el peso se apunta aquí.</p></section></div>';
   $view.innerHTML=h;
+}
+
+const IF_Z={Z1:.5,Z2:.65,Z3:.8,Z4:.9,Z5:1,str:.4};
+function loadDay(k){const L=getLog(k),p=planFor(k);if(!p.m||p.kind==="rest"||!L.done)return{min:0,tss:0};const mins=L.min>0?L.min:p.m;const IF=IF_Z[p.z]||.65;return{min:mins,tss:mins*IF*IF/60*100}}
+function pmc(from,to){let ctl=0,atl=0;const out=[];for(let k=from;parse(k)<=parse(to);k=addDays(k,1)){const t=loadDay(k).tss;ctl+=(t-ctl)/42;atl+=(t-atl)/7;out.push({k,ctl,atl,tsb:ctl-atl})}return out}
+function ftpAdvice(){
+  const today=todayKey(); const recent=(settings.p20||[]).filter(e=>{const d=diffDays(e.date,today);return d>=0&&d<=42});
+  if(!recent.length) return {est:null,msg:"Sin datos de los últimos 42 días. Lo reviso con tus próximos entrenos de intervals.icu."};
+  const best=Math.max(...recent.map(e=>e.w)); const est=Math.round(best*.95);
+  if(est>=settings.ftp+5) return {est,msg:"Tu potencia sugiere un FTP de unos "+est+" W, por encima de los "+settings.ftp+" W. Confírmalo con un segundo test antes de subir."};
+  if(est<=settings.ftp-8) return {est,msg:"Tu forma reciente sugiere unos "+est+" W, por debajo de tu FTP. Mantén el FTP y vigila la fatiga antes de subir cargas."};
+  return {est,msg:"Tu FTP de "+settings.ftp+" W está bien: tu mejor 20' reciente da unos "+est+" W. No lo subas todavía."};
+}
+function graficosHTML(){
+  const today=todayKey();
+  let h='<section class="card"><span class="lbl">Carga de entrenamiento · estilo Training Peaks</span>';
+  if(parse(today)<parse(START)){return h+'<p class="muted" style="margin:0">Las gráficas empiezan el 9 de noviembre, cuando arranca la vuelta progresiva.</p></section>'}
+  const rows=pmc(START,today), last=rows[rows.length-1], n=rows.length;
+  h+='<div class="stats"><div class="stat"><span class="num" style="color:var(--pine)">'+Math.round(last.ctl)+'</span><span class="lbl">Forma crónica (CTL)</span></div><div class="stat"><span class="num" style="color:var(--ember)">'+Math.round(last.atl)+'</span><span class="lbl">Fatiga aguda (ATL)</span></div><div class="stat"><span class="num">'+(last.tsb>0?"+":"")+Math.round(last.tsb)+'</span><span class="lbl">Forma (TSB)</span></div></div>';
+  const W=640,H=200,pl=36,pr=12,pt=12,pb=22;
+  const vals=rows.flatMap(r=>[r.ctl,r.atl,r.tsb,0]);
+  const mx=Math.max(10,Math.ceil(Math.max(...vals)/10)*10), mn=Math.min(0,Math.floor(Math.min(...vals)/10)*10);
+  const X=i=>pl+(n<=1?0:i/(n-1))*(W-pl-pr), Y=v=>pt+(mx-v)/((mx-mn)||1)*(H-pt-pb);
+  const path=key=>rows.map((r,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(r[key]).toFixed(1)).join(" ");
+  let g='';
+  for(let v=mn;v<=mx;v+=10){g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>'}
+  g+='<path d="'+path("tsb")+'" fill="none" stroke="var(--muted)" stroke-dasharray="4 3" stroke-width="1.5"/>';
+  g+='<path d="'+path("atl")+'" fill="none" stroke="var(--ember)" stroke-width="2"/>';
+  g+='<path d="'+path("ctl")+'" fill="none" stroke="var(--pine)" stroke-width="2.5"/>';
+  g+='<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+rows[0].k.slice(5)+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+last.k.slice(5)+'</text>';
+  h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Carga CTL ATL TSB">'+g+'</svg></div>';
+  h+='<p class="muted" style="margin:0;font-size:13px"><b style="color:var(--pine)">Verde</b> = forma crónica (lo que has construido). <b style="color:var(--ember)">Naranja</b> = fatiga reciente. <b>Discontinua</b> = forma (TSB): por debajo de −20 estás muy cargado; entre −10 y +5 estás listo para carga.</p></section>';
+  // volumen semanal
+  const W2=640,H2=190,pb2=24,pt2=16;
+  const wk=[]; for(let k=monday(START);parse(k)<=parse(today);k=addDays(k,7)){let pm=0,dm=0;for(let j=0;j<7;j++){const d=addDays(k,j);pm+=planFor(d).m||0;dm+=loadDay(d).min}wk.push({k,pm,dm})}
+  const sl=wk.slice(-10), mxw=Math.max(60,...sl.map(w=>Math.max(w.pm,w.dm)));
+  const bw=W2/Math.max(sl.length,1); let b='';
+  sl.forEach((w,i)=>{const x=i*bw+bw*.15, ww=bw*.7, hp=(H2-pb2-pt2)*w.pm/mxw, hd=(H2-pb2-pt2)*w.dm/mxw;
+    b+='<rect x="'+x+'" y="'+(H2-pb2-hp)+'" width="'+ww+'" height="'+hp+'" fill="none" stroke="var(--muted)" stroke-dasharray="3 2"/>';
+    b+='<rect x="'+(x+ww*.2)+'" y="'+(H2-pb2-hd)+'" width="'+(ww*.6)+'" height="'+hd+'" fill="var(--pine)" rx="2"/>';
+    b+='<text x="'+(x+ww/2)+'" y="'+(H2-pb2-Math.max(hp,hd)-4)+'" text-anchor="middle" font-size="10" fill="var(--fg)" font-family="var(--mono)">'+Math.round(w.dm)+'</text>';
+    b+='<text x="'+(x+ww/2)+'" y="'+(H2-6)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--mono)">'+w.k.slice(8)+'/'+w.k.slice(5,7)+'</text>'});
+  h+='<section class="card"><span class="lbl">Volumen semanal · hecho (relleno) vs. planificado (contorno), minutos</span><div class="chart"><svg viewBox="0 0 '+W2+' '+H2+'" width="100%" style="min-width:320px" role="img" aria-label="Volumen semanal">'+b+'</svg></div></section>';
+  // FTP
+  const adv=ftpAdvice();
+  h+='<section class="card"><span class="lbl">¿Subir el FTP?</span><div class="stats"><div class="stat"><span class="num">'+settings.ftp+' W</span><span class="lbl">FTP actual</span></div><div class="stat"><span class="num">'+(adv.est?adv.est+' W':'–')+'</span><span class="lbl">Estimado (95% del mejor 20\' de 42 d)</span></div></div><p class="muted">'+esc(adv.msg)+'</p>';
+  h+='<p class="muted" style="font-size:12px;margin:8px 0 0">Lo analizo yo con tus entrenos de intervals.icu y te propongo cada cambio. Un FTP solo sube si el dato se repite, no por un día bueno.</p></section>';
+  return h;
+}
+
+function MEAL_ICON(n){const k=n.toLowerCase();return k.startsWith("desayuno")?"🍳":k.startsWith("media")?"🍎":k.startsWith("comida")?"🥗":k.startsWith("merienda")?"🥛":k.startsWith("pre")?"🍌":k.startsWith("durante")?"💧":k.startsWith("recuper")?"🥤":k.startsWith("cena")?"🐟":k.startsWith("antes")?"🌙":"🍽️"}
+function macroBar(t){const kc=(t.c*4+t.pr*4+t.fa*9)||1;const a=t.c*4/kc*100,b=t.pr*4/kc*100,c=t.fa*9/kc*100;
+  return '<div class="mbar" role="img" aria-label="Reparto de calorías"><span style="width:'+a.toFixed(1)+'%;background:var(--ember)"></span><span style="width:'+b.toFixed(1)+'%;background:var(--pine)"></span><span style="width:'+c.toFixed(1)+'%;background:#d8b04a"></span></div>'
+   +'<div class="mleg"><span><i style="background:var(--ember)"></i>Hidratos '+Math.round(a)+'%</span><span><i style="background:var(--pine)"></i>Proteína '+Math.round(b)+'%</span><span><i style="background:#d8b04a"></i>Grasa '+Math.round(c)+'%</span></div>';}
+function renderMes(){
+  const first=cur.slice(0,8)+"01", mon0=monday(first), mRef=first.slice(0,7);
+  let planM=0, doneM=0, cells="";
+  for(let i=0;i<42;i++){
+    const k=addDays(mon0,i), inM=k.slice(0,7)===mRef, p=planFor(k), L=getLog(k);
+    if(inM){planM+=p.m||0; if(L.done) doneM+=p.m||0;}
+    const bg = (p.kind==="rest"||!p.m) ? "var(--surface-2)" : p.kind==="str" ? "rgba(200,100,28,.22)" : (p.z==="Z3"||p.z==="SS") ? "rgba(214,176,74,.30)" : (p.z==="Z4"||p.z==="Z5") ? "rgba(200,100,28,.38)" : "rgba(31,95,69,.18)";
+    cells+='<button class="md'+(inM?"":" out")+(k===todayKey()?" today":"")+'" data-k="'+k+'" style="background:'+bg+'" aria-label="'+esc(longDate(k))+'"><span class="n">'+parse(k).getDate()+(L.done?' <span class="ck">✓</span>':'')+'</span><span class="mins">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"")+'</span></button>';
+  }
+  const mName=parse(first).toLocaleDateString("es-ES",{month:"long",year:"numeric"}).replace(/ De /g," de ");
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+='<div class="daynav"><button id="mp" aria-label="Mes anterior">‹</button><div style="text-align:center"><div class="lbl">Calendario</div><h2 style="text-transform:capitalize">'+mName+'</h2></div><button id="mn" aria-label="Mes siguiente">›</button></div>';
+  h+='<div class="stats"><div class="stat"><span class="num">'+(planM/60).toFixed(1)+' h</span><span class="lbl">Planificado</span></div><div class="stat"><span class="num">'+(doneM/60).toFixed(1)+' h</span><span class="lbl">Hecho</span></div><div class="stat"><span class="num">'+(planM?Math.round(doneM/planM*100):0)+'%</span><span class="lbl">Cumplido</span></div></div>';
+  h+='<section class="card"><div class="mes-head">'+DOW.map(d=>'<span>'+d+'</span>').join("")+'</div><div class="mes-grid">'+cells+'</div>';
+  h+='<div class="mleg" style="margin-top:12px"><span><i style="background:rgba(31,95,69,.5)"></i>Z2 / fondo</span><span><i style="background:rgba(214,176,74,.7)"></i>Tempo / sweet spot</span><span><i style="background:rgba(200,100,28,.6)"></i>Umbral, test o fuerza</span><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Descanso</span><span>✓ hecho</span></div></section></div>';
+  $view.innerHTML=h;
+  const shift=n=>{const d=parse(first);d.setMonth(d.getMonth()+n);cur=fmt(d);render()};
+  document.getElementById("mp").onclick=()=>shift(-1);
+  document.getElementById("mn").onclick=()=>shift(1);
+  $view.querySelectorAll(".md").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
 }
 
 function render(){
   const ph = phaseOf(todayKey());
   document.getElementById("phasePill").textContent = ph.name;
   document.getElementById("daysLeft").textContent = Math.max(0,diffDays(todayKey(),RACE));
-  ({hoy:renderHoy,semana:renderSemana,fuerza:renderFuerza,progreso:renderProgreso})[view]();
+  ({hoy:renderHoy,semana:renderSemana,fuerza:renderFuerza,progreso:renderProgreso,mes:renderMes})[view]();
 }
 function setView(v){view=v;document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v?"true":"false"));render();window.scrollTo(0,0)}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
