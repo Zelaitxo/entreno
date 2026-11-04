@@ -95,6 +95,8 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .stat{background:var(--surface-2);border-radius:8px;padding:10px;text-align:center}
 .stat .num{font-size:20px;display:block}
 .chart{overflow-x:auto}
+.sy{color:var(--z2);font-weight:700}
+.synced{background:var(--surface-2);color:var(--z2);font-weight:600;border-radius:8px;padding:10px 12px;font-size:14px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
 .tile{background:var(--surface-2);border-radius:8px;padding:8px 6px;text-align:center;display:flex;flex-direction:column;gap:2px;min-width:0}
 .tile .num{font-size:17px;font-weight:600;color:var(--fg)}
@@ -416,7 +418,7 @@ function renderHoy(){
     h += '<pre id="wkText" style="white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0;max-height:260px;overflow:auto;user-select:all">'+esc(wtxt)+'</pre>';
     h += '<div class="row" style="margin-top:8px"><button class="btn primary" id="copyWk">Copiar entreno</button>'+(IV.id&&IV.key?'<button class="btn" id="sendIv">Enviar a intervals.icu</button>':'')+'<span class="muted" id="copyMsg" style="font-size:13px"></span></div></details>';
   }
-  h += '<label class="check"><input type="checkbox" id="done" '+(L.done?"checked":"")+'> Hecho</label>';
+  h += (L.acts&&L.acts.length)?'<div class="synced">● Subido desde intervals.icu: no hace falta marcar nada</div>':'<label class="check"><input type="checkbox" id="done" '+(L.done?"checked":"")+'> Hecho (márcalo si hoy no sincronizas)</label>';
   h += '<label class="f">Esfuerzo percibido (RPE): <b class="num" id="rpeV" style="color:var(--fg)">'+(L.rpe||"–")+'</b>/10<input type="range" id="rpe" min="1" max="10" value="'+(L.rpe||5)+'"></label>';
   h += '</section>';
   h += actCardsHTML(cur);
@@ -468,7 +470,7 @@ function renderSemana(){
     const k=addDays(mon,i), p=planFor(k), L=getLog(k);
     tot+=p.m; if(L.done) done+=p.m;
     const w = p.m?Math.max(8,Math.round(p.m/240*100)):0;
-    rows+='<div class="wday'+(k===todayKey()?" today":"")+'" data-k="'+k+'" role="button" tabindex="0"><div class="dname">'+DOW[i]+'<small>'+parse(k).getDate()+'/'+(parse(k).getMonth()+1)+'</small></div><div style="min-width:0"><div style="font-weight:500">'+esc(p.t)+'</div>'+(w?'<div class="bar" style="width:'+w+'%;background:'+zcolor(p.z)+';margin-top:4px"></div>':'')+'<div class="num muted" style="font-size:12px">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"—")+' · '+targets(p).c+' g HC</div></div><div class="status'+(L.done?" done":"")+'">'+(L.done?"✓":"")+'</div></div>';
+    rows+='<div class="wday'+(k===todayKey()?" today":"")+'" data-k="'+k+'" role="button" tabindex="0"><div class="dname">'+DOW[i]+'<small>'+parse(k).getDate()+'/'+(parse(k).getMonth()+1)+'</small></div><div style="min-width:0"><div style="font-weight:500">'+esc(p.t)+'</div>'+(w?'<div class="bar" style="width:'+w+'%;background:'+zcolor(p.z)+';margin-top:4px"></div>':'')+'<div class="num muted" style="font-size:12px">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"—")+' · '+targets(p).c+' g HC</div></div><div class="status'+(L.done?" done":"")+'"'+((L.acts&&L.acts.length)?' title="Subido desde intervals.icu" style="color:var(--z2)"':'')+'>'+((L.acts&&L.acts.length)?"●":L.done?"✓":"")+'</div></div>';
   }
   let h='<div style="display:flex;flex-direction:column;gap:16px">';
   h+='<div class="daynav"><button id="pw" aria-label="Semana anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2>Semana del '+parse(mon).getDate()+' de '+parse(mon).toLocaleDateString("es-ES",{month:"long"})+'</h2></div><button id="nw" aria-label="Semana siguiente">›</button></div>';
@@ -618,14 +620,14 @@ function renderMes(){
     const k=addDays(mon0,i), inM=k.slice(0,7)===mRef, p=planFor(k), L=getLog(k);
     if(inM){planM+=p.m||0; if(L.done) doneM+=p.m||0;}
     const bg = (p.kind==="rest"||!p.m) ? "var(--surface-2)" : p.kind==="str" ? "rgba(200,100,28,.22)" : (p.z==="Z3"||p.z==="SS") ? "rgba(214,176,74,.30)" : (p.z==="Z4"||p.z==="Z5") ? "rgba(200,100,28,.38)" : "rgba(31,95,69,.18)";
-    cells+='<button class="md'+(inM?"":" out")+(k===todayKey()?" today":"")+'" data-k="'+k+'" style="background:'+bg+'" aria-label="'+esc(longDate(k))+'"><span class="n">'+parse(k).getDate()+(L.done?' <span class="ck">✓</span>':'')+'</span><span class="mins">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"")+'</span></button>';
+    cells+='<button class="md'+(inM?"":" out")+(k===todayKey()?" today":"")+'" data-k="'+k+'" style="background:'+bg+'" aria-label="'+esc(longDate(k))+'"><span class="n">'+parse(k).getDate()+((L.acts&&L.acts.length)?' <span class="sy" title="Subido desde intervals.icu">●</span>':L.done?' <span class="ck">✓</span>':'')+'</span><span class="mins">'+(p.m?Math.floor(p.m/60)+"h"+String(p.m%60).padStart(2,"0"):"")+'</span></button>';
   }
   const mName=parse(first).toLocaleDateString("es-ES",{month:"long",year:"numeric"}).replace(/ De /g," de ");
   let h='<div style="display:flex;flex-direction:column;gap:16px">';
-  h+='<div class="daynav"><button id="mp" aria-label="Mes anterior">‹</button><div style="text-align:center"><div class="lbl">Calendario</div><h2 style="text-transform:capitalize">'+mName+'</h2></div><button id="mn" aria-label="Mes siguiente">›</button></div>';
+  h+='<div class="daynav"><button id="mp" aria-label="Mes anterior">‹</button><div style="text-align:center"><div class="lbl">Calendario</div><h2>'+mName.charAt(0).toUpperCase()+mName.slice(1)+'</h2></div><button id="mn" aria-label="Mes siguiente">›</button></div>';
   h+='<div class="stats"><div class="stat"><span class="num">'+(planM/60).toFixed(1)+' h</span><span class="lbl">Planificado</span></div><div class="stat"><span class="num">'+(doneM/60).toFixed(1)+' h</span><span class="lbl">Hecho</span></div><div class="stat"><span class="num">'+(planM?Math.round(doneM/planM*100):0)+'%</span><span class="lbl">Cumplido</span></div></div>';
   h+='<section class="card"><div class="mes-head">'+DOW.map(d=>'<span>'+d+'</span>').join("")+'</div><div class="mes-grid">'+cells+'</div>';
-  h+='<div class="mleg" style="margin-top:12px"><span><i style="background:rgba(31,95,69,.5)"></i>Z2 / fondo</span><span><i style="background:rgba(214,176,74,.7)"></i>Tempo / sweet spot</span><span><i style="background:rgba(200,100,28,.6)"></i>Umbral, test o fuerza</span><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Descanso</span><span>✓ hecho</span></div></section></div>';
+  h+='<div class="mleg" style="margin-top:12px"><span><i style="background:rgba(31,95,69,.5)"></i>Z2 / fondo</span><span><i style="background:rgba(214,176,74,.7)"></i>Tempo / sweet spot</span><span><i style="background:rgba(200,100,28,.6)"></i>Umbral, test o fuerza</span><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Descanso</span><span><b class="sy">●</b> subido solo</span><span><b class="ck">✓</b> marcado a mano</span></div></section></div>';
   $view.innerHTML=h;
   const shift=n=>{const d=parse(first);d.setMonth(d.getMonth()+n);cur=fmt(d);render()};
   document.getElementById("mp").onclick=()=>shift(-1);
