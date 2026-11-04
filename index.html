@@ -187,15 +187,20 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .hero .big small{font-size:16px;color:var(--muted);font-weight:600}
 .session{border-left-width:4px;border-radius:2px}
 .status.done{background:var(--ok);border-color:var(--ok)}
+.brandrow{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 4px 12px rgba(10,11,15,.25)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
+    <div class="brandrow">
+    <img class="logo" src="img/logo.jpg" alt="Asuela" width="56" height="56">
     <div class="brand">
-      <span class="eyebrow">Josu · Temporada 2027</span>
+      <span class="eyebrow">Asuela · Josu · Temporada 2027</span>
       <h1>BTT Urbión</h1>
       <span class="pill" id="phasePill">Fase</span>
+    </div>
     </div>
     <div class="countchip" aria-label="Días hasta la carrera"><b class="num" id="daysLeft">–</b><span>días</span></div>
   </header>
