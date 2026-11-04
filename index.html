@@ -95,6 +95,33 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .stat{background:var(--surface-2);border-radius:8px;padding:10px;text-align:center}
 .stat .num{font-size:20px;display:block}
 .chart{overflow-x:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.tile{background:var(--surface-2);border-radius:8px;padding:8px 6px;text-align:center;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .num{font-size:17px;font-weight:600;color:var(--fg)}
+.tile small{font-size:11px;color:var(--muted);font-weight:400}
+.tile .lbl{font-size:10px}
+.charts{border:1px solid var(--line);border-radius:8px;overflow:hidden;touch-action:pan-y;cursor:crosshair;background:var(--surface)}
+.sc{position:relative;border-bottom:1px solid var(--line)}
+.sc:last-child{border-bottom:0}
+.sc svg{display:block}
+.sclbl{position:absolute;top:3px;left:8px;font-size:11px;color:var(--muted);pointer-events:none}
+.cursor{position:absolute;top:0;bottom:0;width:1px;background:var(--fg);opacity:.55;display:none;pointer-events:none}
+.readout{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:8px;padding:8px 10px;min-height:20px;line-height:1.5}
+.taxis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:-6px}
+.map{height:260px;border-radius:8px;overflow:hidden;border:1px solid var(--line);z-index:0;margin-top:6px}
+.actdetail{display:flex;flex-direction:column;gap:10px}
+table.cmp{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);min-width:300px}
+.cmp th{text-align:left;color:var(--muted);font-weight:500;padding:5px 4px;border-bottom:1px solid var(--line)}
+.cmp td{padding:6px 4px;border-bottom:1px solid var(--line)}
+.cmp tr.me td{background:var(--pine-soft);font-weight:600}
+.efbar{position:relative;background:var(--surface-2);border-radius:4px;height:18px;min-width:64px;display:flex;align-items:center}
+.efbar span{position:absolute;left:0;top:0;bottom:0;background:var(--pine);opacity:.35;border-radius:4px}
+.efbar b{position:relative;padding-left:5px;font-size:11px}
+.zchip{color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.hist{display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:48px 1fr;gap:2px 8px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 2px;color:var(--fg);font:inherit;cursor:pointer}
+.hrow .hn{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow .muted{grid-column:2;font-size:12px}
 .mbar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:10px 0 6px;background:var(--surface-2)}
 .mbar span{display:block;height:100%}
 .mleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
@@ -392,6 +419,7 @@ function renderHoy(){
   h += '<label class="check"><input type="checkbox" id="done" '+(L.done?"checked":"")+'> Hecho</label>';
   h += '<label class="f">Esfuerzo percibido (RPE): <b class="num" id="rpeV" style="color:var(--fg)">'+(L.rpe||"–")+'</b>/10<input type="range" id="rpe" min="1" max="10" value="'+(L.rpe||5)+'"></label>';
   h += '</section>';
+  h += actCardsHTML(cur);
   // registro
   h += '<section class="card"><span class="lbl">Registro del día</span><div class="fields">';
   h += '<label class="f">Peso en ayunas (kg)<input type="number" step="0.1" id="peso" inputmode="decimal" value="'+(L.peso??"")+'" placeholder="'+settings.peso+'"></label>';
@@ -416,6 +444,7 @@ function renderHoy(){
   on("next","click",()=>{cur=addDays(cur,1);render()});
   on("goToday","click",()=>{cur=todayKey();render()});
   on("syncBtn","click",()=>syncIV(false));
+  $view.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>loadDetail(cur,+b.dataset.load));
   on("toStr","click",()=>setView("fuerza"));
   on("sendIv","click",()=>{const msg=document.getElementById("copyMsg");msg.textContent="Enviando…";
     sendToIntervals(cur).then(()=>{msg.textContent="Enviado. Revisa el calendario de intervals.icu."}).catch(err=>{msg.textContent=err.message==="http 401"||err.message==="http 403"?"Clave o ID incorrectos. Revisa Semana → Ajustes.":"No se pudo enviar (puede bloquearlo el navegador). Usa Copiar entreno."})});
@@ -523,13 +552,15 @@ function renderProgreso(){
   }
   h+='</section>';
   h+='<section class="card"><span class="lbl">Punto de partida · tu historial de Garmin</span><div class="stats"><div class="stat"><span class="num">~230 W</span><span class="lbl">FTP feb 2026</span></div><div class="stat"><span class="num">~195 W</span><span class="lbl">FTP estimado hoy</span></div><div class="stat"><span class="num">1/sem</span><span class="lbl">Salidas desde julio</span></div></div><p class="muted" style="margin:0">En febrero hacías 5–7 salidas por semana y tu mejor potencia de 20 minutos llegó a 242 W. Entre abril y finales de julio no hay actividad, y desde entonces sales una vez por semana, unos 60–80 minutos, con picos de 20 minutos de 204–216 W. Por eso las 4 primeras semanas suben poco a poco y terminan con un nuevo test.</p></section>';
+  h+=historialHTML();
   h+=graficosHTML();
   h+='<section class="card"><span class="lbl">Integraciones</span><p class="muted" style="margin:0">De momento el registro es manual. La conexión con intervals.icu (que recoge lo de Garmin) es el siguiente paso; TrainingPeaks no ofrece API a particulares. La báscula Xiaomi/Renpho no tiene conexión directa: el peso se apunta aquí.</p></section></div>';
   $view.innerHTML=h;
+  $view.querySelectorAll(".hrow").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
 }
 
 const IF_Z={Z1:.5,Z2:.65,Z3:.8,Z4:.9,Z5:1,str:.4};
-function loadDay(k){const L=getLog(k),p=planFor(k);if(!p.m||p.kind==="rest"||!L.done)return{min:0,tss:0};const mins=L.min>0?L.min:p.m;const IF=IF_Z[p.z]||.65;return{min:mins,tss:mins*IF*IF/60*100}}
+function loadDay(k){const L=getLog(k),p=planFor(k);if(L.acts&&L.acts.length)return{min:L.acts.reduce((s,a)=>s+a.mov,0)/60,tss:L.acts.reduce((s,a)=>s+(a.load||0),0)};if(!p.m||p.kind==="rest"||!L.done)return{min:0,tss:0};const mins=L.min>0?L.min:p.m;const IF=IF_Z[p.z]||.65;return{min:mins,tss:mins*IF*IF/60*100}}
 function pmc(from,to){let ctl=0,atl=0;const out=[];for(let k=from;parse(k)<=parse(to);k=addDays(k,1)){const t=loadDay(k).tss;ctl+=(t-ctl)/42;atl+=(t-atl)/7;out.push({k,ctl,atl,tsb:ctl-atl})}return out}
 function ftpAdvice(){
   const today=todayKey(); const recent=(settings.p20||[]).filter(e=>{const d=diffDays(e.date,today);return d>=0&&d<=42});
@@ -602,25 +633,137 @@ function renderMes(){
   $view.querySelectorAll(".md").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
 }
 
+
+// ---------- detalle de actividades (intervals.icu) ----------
+const ZCOL=["#8a968f","#2f7fc1","#3c9a5f","#d9932a","#cf4a3c","#9b4dca","#5b3fa6"];
+const HRCOL=["#8a968f","#2f7fc1","#3c9a5f","#d9932a","#cf4a3c","#b23a48","#7a1f2b"];
+const ZN=["Z1","Z2","Z3","Z4","Z5","Z6","Z7"];
+function ivGet(path){return fetch("https://intervals.icu/api/v1/"+path,{headers:{"Authorization":"Basic "+btoa("API_KEY:"+IV.key)}}).then(r=>{if(!r.ok)throw new Error("http "+r.status);return r.json()})}
+function fmtDur(s){s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")}
+function actFrom(a){return {id:a.id,name:a.name||"Salida",start:a.start_date_local||"",type:a.type,mov:a.moving_time||a.elapsed_time||0,dist:a.distance||0,spd:(a.average_speed||0)*3.6,maxspd:(a.max_speed||0)*3.6,hr:a.average_heartrate||null,maxhr:a.max_heartrate||null,cad:a.average_cadence||null,w:a.icu_average_watts||a.average_watts||null,np:a.icu_weighted_avg_watts||null,load:a.icu_training_load??null,IF:a.icu_intensity||null,ef:a.icu_efficiency_factor||null,vi:a.icu_variability_index||null,kcal:a.calories||null,kj:a.icu_joules?Math.round(a.icu_joules/1000):null,elev:a.total_elevation_gain||0,ftp:a.icu_ftp||null,zones:(a.icu_zone_times||[]).filter(z=>/^Z\d$/.test(z.id)).map(z=>z.secs||0),hrz:a.icu_hr_zone_times||[]}}
+function best(arr,win){if(arr.length<win)return 0;let s=0,m=0;for(let i=0;i<arr.length;i++){s+=(arr[i]||0);if(i>=win)s-=(arr[i-win]||0);if(i>=win-1&&s>m)m=s}return m/win}
+function allActs(){const out=[];Object.values(logs).forEach(L=>{((L&&L.acts)||[]).forEach(a=>out.push(Object.assign({day:L.date},a)))});return out.sort((x,y)=>x.start<y.start?-1:1)}
+function addP20(k,w){if(!(w>0))return;const arr=(settings.p20||[]).slice();const ex=arr.find(e=>e.date===k);if(ex)ex.w=Math.max(ex.w,Math.round(w));else arr.push({date:k,w:Math.round(w)});settings.p20=arr;saveSettings()}
+
+function zoneBar(t,arr,cols){const tot=(arr||[]).reduce((s,x)=>s+(x||0),0);if(!tot)return "";
+  return '<div><span class="lbl">'+t+'</span><div class="mbar">'+arr.map((x,i)=>x?'<span style="width:'+(x/tot*100).toFixed(2)+'%;background:'+cols[i]+'"></span>':'').join("")+'</div><div class="mleg">'+arr.map((x,i)=>x>=30?'<span><i style="background:'+cols[i]+'"></i>'+ZN[i]+' '+Math.round(x/60)+"'</span>":'').join("")+'</div></div>'}
+
+function compareHTML(k,a){
+  const t=planFor(k).t;
+  const same=allActs().filter(x=>x.id!==a.id&&x.day<k&&(planFor(x.day).t===t||x.name===a.name)).slice(-5);
+  if(!same.length) return '<p class="muted" style="font-size:13px;margin:0">Cuando repitas este tipo de entreno, aquí verás la comparación con los anteriores.</p>';
+  const rows=same.concat([Object.assign({day:k},a)]), maxEf=Math.max(...rows.map(r=>r.ef||0))||1;
+  let h='<div><span class="lbl">Comparado con entrenos parecidos</span><div class="chart"><table class="cmp"><thead><tr><th>Fecha</th><th>Tiempo</th><th>W</th><th>NP</th><th>FC</th><th>Vatios/pulso</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+='<tr'+(r.id===a.id?' class="me"':'')+'><td>'+r.day.slice(8)+'/'+r.day.slice(5,7)+'</td><td>'+Math.round(r.mov/60)+"'</td><td>"+(r.w?Math.round(r.w):"–")+'</td><td>'+(r.np?Math.round(r.np):"–")+'</td><td>'+(r.hr?Math.round(r.hr):"–")+'</td><td><div class="efbar"><span style="width:'+((r.ef||0)/maxEf*100).toFixed(0)+'%"></span><b>'+(r.ef?r.ef.toFixed(2):"–")+'</b></div></td></tr>'});
+  h+='</tbody></table></div>';
+  const prev=same[same.length-1];
+  if(prev.ef&&a.ef){const d=(a.ef-prev.ef)/prev.ef*100;
+    h+='<p class="muted" style="font-size:13px;margin:6px 0 0">'+(d>=1?'Hoy produces <b style="color:var(--ok)">'+d.toFixed(1)+'% más vatios por pulsación</b> que la última vez: tu base aeróbica mejora.':d<=-1?'Hoy produces <b style="color:var(--warn)">'+Math.abs(d).toFixed(1)+'% menos vatios por pulsación</b> que la última vez. Suele deberse a cansancio, calor o poco sueño.':'Eficiencia parecida a la última vez.')+'</p>'}
+  return h+'</div>';
+}
+
+function actCardsHTML(k){
+  const acts=getLog(k).acts||[]; if(!acts.length) return "";
+  return acts.map((a,i)=>{
+    const tiles=[["Duración",fmtDur(a.mov),""],["Distancia",(a.dist/1000).toFixed(1),"km"],["Vel. media",a.spd.toFixed(1),"km/h"],["Vel. máx",a.maxspd.toFixed(1),"km/h"],["Potencia media",a.w?Math.round(a.w):"–","W"],["Normalizada",a.np?Math.round(a.np):"–","W"],["FC media",a.hr?Math.round(a.hr):"–","ppm"],["FC máx",a.maxhr?Math.round(a.maxhr):"–","ppm"],["Cadencia",a.cad?Math.round(a.cad):"–","rpm"],["Carga",a.load??"–",""],["Intensidad",a.IF?Math.round(a.IF)+"%":"–",""],["Calorías",a.kcal??"–","kcal"],["Trabajo",a.kj??"–","kJ"],["Desnivel",Math.round(a.elev||0),"m"],["Vatios/pulso",a.ef?a.ef.toFixed(2):"–",""],["Mejor 20'",a.p20?Math.round(a.p20):"–","W"]];
+    let h='<section class="card"><div class="row between"><span class="lbl">Tu entreno · datos reales de intervals.icu</span><span class="num muted" style="font-size:12px">'+esc(a.start.slice(11,16))+'</span></div><h3 style="margin:0">'+esc(a.name)+'</h3>';
+    h+='<div class="tiles">'+tiles.map(t=>'<div class="tile"><span class="num">'+t[1]+(t[2]?'<small> '+t[2]+'</small>':'')+'</span><span class="lbl">'+t[0]+'</span></div>').join("")+'</div>';
+    h+=zoneBar("Tiempo en zonas de potencia",a.zones,ZCOL);
+    h+=zoneBar("Tiempo en zonas de pulso",a.hrz,HRCOL);
+    h+='<div class="actdetail" id="ad'+i+'"><button class="btn primary" data-load="'+i+'">Ver gráficas, mapa e intervalos</button></div>';
+    h+=compareHTML(k,a);
+    return h+'</section>';
+  }).join("");
+}
+
+function down(data,n){const L=data.length;if(L<=n)return data.slice();const out=[],b=L/n;for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.floor(i*b);j<Math.floor((i+1)*b);j++){const v=data[j];if(v!=null){s+=v;c++}}out.push(c?s/c:null)}return out}
+function streamSVG(data,label,unit,color,isAlt){
+  const W=640,H=100,pt=20,pb=4; const d=down(data,400), vals=d.filter(v=>v!=null); if(!vals.length) return "";
+  let mn=isAlt?Math.min(...vals):0, mx=Math.max(...vals); if(mx===mn) mx=mn+1;
+  const X=i=>i/Math.max(d.length-1,1)*W, Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+  let line=""; d.forEach((v,i)=>{if(v==null)return;line+=(line?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)});
+  const raw=data.filter(v=>v!=null), avg=raw.reduce((s,v)=>s+v,0)/raw.length, rmax=Math.max(...raw);
+  return '<div class="sc"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" width="100%" height="'+H+'" role="img" aria-label="'+label+'"><path d="'+line+' L'+W+' '+(H-pb)+' L0 '+(H-pb)+' Z" fill="'+color+'" opacity=".16"/><path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><div class="sclbl"><b style="color:'+color+'">'+label+'</b> · media '+(unit==="km/h"?avg.toFixed(1):Math.round(avg))+' '+unit+' · máx '+(unit==="km/h"?rmax.toFixed(1):Math.round(rmax))+'</div><div class="cursor"></div></div>';
+}
+function bindReadout(i,time,used){
+  const ch=document.getElementById("ch"+i), ro=document.getElementById("ro"+i); if(!ch||!ro||!used.length) return;
+  const n=used[0][1].length;
+  const move=e=>{const r=ch.getBoundingClientRect(), x=Math.min(Math.max((e.clientX-r.left)/r.width,0),1), idx=Math.round(x*(n-1));
+    ch.querySelectorAll(".cursor").forEach(c=>{c.style.left=(x*100)+"%";c.style.display="block"});
+    ro.innerHTML='<b>'+fmtDur(time[idx]!=null?time[idx]:idx)+'</b> · '+used.map(([d,data])=>{const v=data[idx];return '<span style="color:'+d[3]+'">'+(v==null?"–":(d[2]==="km/h"?v.toFixed(1):Math.round(v)))+' '+d[2]+'</span>'}).join(" · ")};
+  ch.addEventListener("pointermove",move); ch.addEventListener("pointerdown",move);
+}
+function loadLeaflet(){if(window.L&&window.L.map)return Promise.resolve();return new Promise((res,rej)=>{const c=document.createElement("link");c.rel="stylesheet";c.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";document.head.appendChild(c);const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+function drawMap(id,lat,lng){
+  loadLeaflet().then(()=>{const Lf=window.L, pts=[];for(let j=0;j<lat.length;j+=3){if(lat[j]!=null&&lng[j]!=null)pts.push([lat[j],lng[j]])}
+    const el=document.getElementById(id); if(!el||pts.length<2) return;
+    const m=Lf.map(el,{zoomControl:true});Lf.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(m);
+    const pl=Lf.polyline(pts,{color:"#d64570",weight:3}).addTo(m);m.fitBounds(pl.getBounds(),{padding:[14,14]});
+    Lf.circleMarker(pts[0],{radius:6,color:"#2e8b57",fillColor:"#2e8b57",fillOpacity:1}).addTo(m);Lf.circleMarker(pts[pts.length-1],{radius:6,color:"#16201b",fillColor:"#16201b",fillOpacity:1}).addTo(m);
+  }).catch(()=>{const el=document.getElementById(id);if(el)el.innerHTML='<p class="muted" style="padding:8px">No se pudo cargar el mapa.</p>'});
+}
+async function loadDetail(k,i){
+  const a=(getLog(k).acts||[])[i], box=document.getElementById("ad"+i); if(!a||!box) return;
+  if(!IV.id||!IV.key){box.innerHTML='<p class="muted">Configura intervals.icu en la pestaña Semana para ver las gráficas.</p>';return}
+  box.innerHTML='<p class="muted">Cargando tu entreno segundo a segundo…</p>';
+  try{
+    const [st,iv]=await Promise.all([ivGet("activity/"+a.id+"/streams?types=time,watts,heartrate,cadence,velocity_smooth,altitude,latlng"),ivGet("activity/"+a.id+"/intervals").catch(()=>null)]);
+    const S={}; (st||[]).forEach(s=>S[s.type]=s);
+    const time=(S.time&&S.time.data)||[];
+    const defs=[["watts","Potencia","W","#7b5cd6"],["heartrate","Pulso","ppm","#d64570"],["cadence","Cadencia","rpm","#c04fb9"],["velocity_smooth","Velocidad","km/h","#2f7fc1",3.6],["altitude","Altitud","m","#7d8a83"]];
+    const used=[]; let charts="";
+    defs.forEach(d=>{const s=S[d[0]]; if(!s||!s.data||!s.data.some(v=>v)) return; const data=d[4]?s.data.map(v=>v==null?null:v*d[4]):s.data; used.push([d,data]); charts+=streamSVG(data,d[1],d[2],d[3],d[0]==="altitude")});
+    let h='';
+    if(used.length) h+='<div class="readout" id="ro'+i+'">Toca o desliza el dedo por las gráficas para ver cada segundo</div><div class="charts" id="ch'+i+'">'+charts+'</div><div class="taxis"><span>0:00</span><span>'+fmtDur((time[time.length-1]||a.mov)/2)+'</span><span>'+fmtDur(time[time.length-1]||a.mov)+'</span></div>';
+    const ll=S.latlng, hasMap=ll&&ll.data&&ll.data2&&ll.data.some(v=>v);
+    if(hasMap) h+='<div><span class="lbl">Ruta</span><div class="map" id="map'+i+'"></div></div>';
+    const ints=iv&&iv.icu_intervals||[];
+    if(ints.length) h+='<div><span class="lbl">Intervalos</span><div class="chart"><table class="cmp"><thead><tr><th>#</th><th>Tiempo</th><th>W</th><th>FC</th><th>Zona</th></tr></thead><tbody>'+ints.map((x,j)=>'<tr><td>'+(j+1)+'</td><td>'+fmtDur(x.moving_time)+'</td><td>'+(x.average_watts?Math.round(x.average_watts):"–")+'</td><td>'+(x.average_heartrate?Math.round(x.average_heartrate):"–")+'</td><td>'+(x.zone?'<span class="zchip" style="background:'+ZCOL[Math.min(x.zone,7)-1]+'">Z'+x.zone+'</span>':"–")+'</td></tr>').join("")+'</tbody></table></div></div>';
+    box.innerHTML=h||'<p class="muted">Esta actividad no tiene datos segundo a segundo.</p>';
+    bindReadout(i,time,used);
+    if(hasMap) drawMap("map"+i,ll.data,ll.data2);
+    if(a.p20==null&&S.watts&&a.mov>=1200){const p=best(S.watts.data||[],1200);const acts=(getLog(k).acts||[]).slice();acts[i]=Object.assign({},acts[i],{p20:p});setLog(k,{acts});addP20(k,p)}
+  }catch(e){box.innerHTML='<p class="muted">No se pudieron cargar las gráficas ('+esc(e.message)+'). Revisa la clave en Semana.</p>'}
+}
+
+function historialHTML(){
+  const acts=allActs(); if(!acts.length) return "";
+  const ef=acts.filter(a=>a.ef);
+  let h='<section class="card"><span class="lbl">Eficiencia aeróbica · vatios por pulsación</span>';
+  if(ef.length>=2){
+    const W=640,H=170,pl=40,pr=12,pt=14,pb=24, vs=ef.map(a=>a.ef), mn=Math.min(...vs)*0.97, mx=Math.max(...vs)*1.03;
+    const X=i=>pl+i/(ef.length-1)*(W-pl-pr), Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+    let g='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(H-pb)+'" y2="'+(H-pb)+'" stroke="var(--line)"/>';
+    g+='<text x="'+(pl-6)+'" y="'+(Y(Math.max(...vs))+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+Math.max(...vs).toFixed(2)+'</text><text x="'+(pl-6)+'" y="'+(Y(Math.min(...vs))+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+Math.min(...vs).toFixed(2)+'</text>';
+    g+='<path d="'+ef.map((a,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(a.ef).toFixed(1)).join(" ")+'" fill="none" stroke="var(--pine)" stroke-width="2"/>'+ef.map((a,i)=>'<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(a.ef).toFixed(1)+'" r="3.5" fill="var(--pine)"/>').join("");
+    g+='<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+ef[0].day.slice(8)+'/'+ef[0].day.slice(5,7)+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+ef[ef.length-1].day.slice(8)+'/'+ef[ef.length-1].day.slice(5,7)+'</text>';
+    h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Eficiencia aeróbica">'+g+'</svg></div><p class="muted" style="font-size:13px;margin:0">Si la línea sube, produces más vatios con el mismo pulso: tu motor aeróbico mejora. Compárala solo entre salidas suaves parecidas.</p>';
+  } else h+='<p class="muted" style="margin:0">Con dos o más salidas sincronizadas verás aquí cómo evoluciona.</p>';
+  h+='</section><section class="card"><span class="lbl">Historial de salidas · toca una para ver el detalle</span><div class="hist">'+acts.slice().reverse().slice(0,40).map(a=>'<button class="hrow" data-k="'+a.day+'"><span class="num">'+a.day.slice(8)+'/'+a.day.slice(5,7)+'</span><span class="hn">'+esc(a.name)+'</span><span class="num muted">'+Math.round(a.mov/60)+"' · "+(a.dist/1000).toFixed(1)+' km · '+(a.w?Math.round(a.w)+" W":"– W")+' · '+(a.hr?Math.round(a.hr)+" ppm":"– ppm")+'</span></button>').join("")+'</div></section>';
+  return h;
+}
+
 async function syncIV(auto){
   if(!IV.id||!IV.key){ if(!auto){ syncNote="Añade tu ID y clave en Semana → intervals.icu."; render(); } return; }
   syncNote="Sincronizando…"; if(!auto) render();
   try{
-    const oldest=addDays(todayKey(),-14), newest=addDays(todayKey(),1);
-    const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(IV.id)+"/activities?oldest="+oldest+"&newest="+newest,{headers:{"Authorization":"Basic "+btoa("API_KEY:"+IV.key)}});
-    if(!r.ok) throw new Error("http "+r.status);
-    const list=await r.json();
+    const list=await ivGet("athlete/"+encodeURIComponent(IV.id)+"/activities?oldest="+addDays(todayKey(),-90)+"&newest="+addDays(todayKey(),1));
+    const byDay={};
+    (list||[]).filter(a=>/ride/i.test(a.type||"")).forEach(a=>{const k=(a.start_date_local||"").slice(0,10);if(k)(byDay[k]=byDay[k]||[]).push(actFrom(a))});
     let n=0;
-    list.filter(a=>/ride/i.test(a.type||"")).forEach(a=>{
-      const k=(a.start_date_local||"").slice(0,10); if(!k) return;
-      const mins=Math.round((a.moving_time||a.elapsed_time||0)/60);
-      const w=Math.round(a.icu_weighted_avg_watts||a.average_watts||0);
-      const L=getLog(k), patch={done:true};
-      if(mins>0 && !(L.min>0)) patch.min=mins;
-      if(w>0 && !L.np) patch.np=w;
-      setLog(k,patch); n++;
-    });
-    syncNote="Sincronizado: "+n+" salidas en bici · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    Object.keys(byDay).forEach(k=>{const prev=getLog(k).acts||[];
+      const acts=byDay[k].sort((x,y)=>x.start<y.start?-1:1).map(a=>{const o=prev.find(p=>p.id===a.id);return (o&&o.p20!=null)?Object.assign(a,{p20:o.p20}):a});
+      setLog(k,{acts,done:true,min:Math.round(acts.reduce((s,a)=>s+a.mov,0)/60),np:acts[0].w?Math.round(acts[0].w):(getLog(k).np??null)}); n+=acts.length});
+    // mejor potencia de 20' de cada salida, para el análisis automático del FTP
+    let c=0;
+    for(const k of Object.keys(byDay).sort().reverse()){
+      const acts=(getLog(k).acts||[]).slice(); let ch=false;
+      for(let j=0;j<acts.length;j++){const a=acts[j]; if(a.p20!=null||a.mov<1200||!a.w||c>=8) continue;
+        try{const st=await ivGet("activity/"+a.id+"/streams?types=watts");const wv=((st||[]).find(s=>s.type==="watts")||{}).data||[];acts[j]=Object.assign({},a,{p20:best(wv,1200)});c++;ch=true;addP20(k,acts[j].p20)}catch(e){}
+      }
+      if(ch) setLog(k,{acts});
+    }
+    syncNote="Sincronizado: "+n+" salidas · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
   }catch(e){ syncNote=(e.message==="http 401"||e.message==="http 403")?"Clave o ID incorrectos.":"No se pudo sincronizar. Revisa la conexión."; }
   render();
 }
