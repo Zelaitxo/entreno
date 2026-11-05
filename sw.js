@@ -1,4 +1,4 @@
-const CACHE = "entreno-v11";
+const CACHE = "entreno-v12";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./img/logo.jpg"];
 
 self.addEventListener("install", (e) => {

@@ -218,6 +218,29 @@ header.top{flex-wrap:nowrap;align-items:center}
 details.adv summary{cursor:pointer;font-weight:600;color:var(--muted);list-style:none}
 details.adv summary::before{content:"⚙️  "}
 details.adv[open] summary{margin-bottom:6px}
+
+.meals{gap:0;padding:6px 18px}
+.mcard{padding:14px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.mcard:first-child{border-top:0}
+.mcard.done .mt b{color:var(--muted);text-decoration:line-through}
+.mhead{display:flex;align-items:center;gap:10px}
+.mic{font-size:22px;width:40px;height:40px;display:grid;place-items:center;background:var(--surface-2);border-radius:12px;flex:none}
+.mt{display:flex;flex-direction:column;min-width:0;flex:1}
+.mt b{font-size:15px;line-height:1.3}
+.mhead input{width:22px;height:22px;accent-color:var(--pine);flex:none}
+.tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;flex:none;text-transform:uppercase;letter-spacing:.05em}
+.t-nuevo{background:#dcfce7;color:#15803d}.t-decasa{background:var(--pine-soft);color:var(--pine)}.t-provisional{background:#fef3c7;color:#b45309}
+.mitems{list-style:none;margin:0;padding:0 0 0 50px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.mitems li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.mitems li b{white-space:nowrap;color:var(--ember);font-weight:700}
+.mtip{margin:0 0 0 50px;font-size:13px;color:var(--muted);line-height:1.45}
+.mnote{margin:4px 0;padding:12px;border-radius:14px;background:var(--pine-soft);font-size:13px;line-height:1.5}
+.seg{display:inline-flex;margin-left:50px;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px;align-self:flex-start}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 13px var(--body);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(16,24,40,.1)}
+.shop{margin-top:10px}.shop b{font-size:14px}.shop ul{margin:4px 0 0;padding-left:18px;columns:2;column-gap:20px;font-size:14px}
+@media (max-width:420px){.shop ul{columns:1}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t-nuevo{background:#14532d;color:#86efac}:root:not([data-theme="light"]) .t-provisional{background:#451a03;color:#fcd34d}}
 </style>
 </head>
 <body>
@@ -790,24 +813,6 @@ async function syncIV(auto){
   render();
 }
 
-function renderDieta(){
-  const p = planFor(cur), t = targets(p), L = getLog(cur), menu = MENUS[t.lv], ph = phaseOf(cur);
-  let h = '<div style="display:flex;flex-direction:column;gap:16px">';
-  h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(p.t)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
-  h += '<section class="card hero"><span class="lbl">Objetivo del día</span><div class="big num">'+t.kcal+'<small> kcal</small></div><div class="muted" style="font-size:14px">'+esc(menu.name)+'</div></section>';
-  h += '<section class="card"><div class="row between"><span class="lbl">Nutrición · '+menu.name+'</span><span class="num muted">'+t.kcal+' kcal</span></div>';
-  h += '<div class="macros"><div class="macro"><span class="num">'+t.c+' g</span><span class="lbl">Hidratos</span></div><div class="macro"><span class="num">'+t.pr+' g</span><span class="lbl">Proteína</span></div><div class="macro"><span class="num">'+t.fa+' g</span><span class="lbl">Grasa</span></div><div class="macro"><span class="num">'+t.cho+'</span><span class="lbl">g HC/kg</span></div></div>';
-  h += macroBar(t);
-  h += '<div>'+menu.meals.map((m,i)=>{const ck=(L.meals||[])[i];return '<div class="meal"><input type="checkbox" data-meal="'+i+'" '+(ck?"checked":"")+' aria-label="'+esc(m[0])+' hecho"><div><span class="t">'+MEAL_ICON(m[0])+' '+esc(m[0])+'</span><span class="time">'+esc(m[1])+'</span></div><ul>'+m[2].map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>'}).join("")+'</div>';
-  h += '<div class="note"><b style="color:var(--fg)">'+(t.lv==="bajo"?"Día de déficit suave.":"Día de comer para entrenar.")+'</b> '+(t.lv==="bajo"?"Aquí es donde se pierde la grasa: menos hidratos, la misma proteína y mucho volumen de verdura.":"Hoy no se recorta: comer antes, durante y después del entreno evita el hambre voraz de la noche y protege el músculo.")+'</div>';
-  h += '<details class="note"><summary style="cursor:pointer;color:var(--fg);font-weight:500">Si aprieta el hambre o la ansiedad</summary><ul style="margin:8px 0 0;padding-left:18px"><li>Primero un vaso de agua o un café o té, y espera 10 minutos.</li><li>Tentempiés que llenan mucho: fruta, skyr, huevo cocido, zanahoria o pepino con hummus, un caldo o palomitas hechas en casa.</li><li>Proteína en todas las comidas (30–40 g). Es lo que más sacia.</li><li>No pases más de 4 horas sin comer, sobre todo antes del rodillo.</li><li>Duerme 7–9 h: dormir poco dispara el hambre al día siguiente.</li><li>Nada está prohibido: 1–2 caprichos planificados a la semana. Las dietas rígidas acaban en atracones más a menudo que las flexibles.</li></ul></details>';
-  h += '<div class="note">Proteína a 2,2 g/kg repartida en 4–5 tomas, más la fuerza semanal, para ganar o mantener músculo mientras pierdes grasa. Ritmo objetivo: 0,3–0,4 kg por semana. Más rápido se pierde músculo y rendimiento.</div>';
-  h += '</section></div>';
-  $view.innerHTML = h;
-  document.getElementById("prev").onclick=()=>{cur=addDays(cur,-1);render()};
-  document.getElementById("next").onclick=()=>{cur=addDays(cur,1);render()};
-  $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr})}));
-}
 
 // ---------- Progreso: análisis de ciclismo ----------
 const PBW=[[5,"5 s"],[30,"30 s"],[60,"1 min"],[300,"5 min"],[1200,"20 min"],[3600,"1 h"],[7200,"2 h"]];
@@ -959,6 +964,70 @@ function renderProgreso(){
   $view.innerHTML=h;
   $view.querySelectorAll(".hrow").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
   bindFtpBanner();
+}
+
+// ---------- Dieta estructurada (desayunos fijos, media mañana y merienda fijas, comidas y cenas por día) ----------
+// cantidades [suave, medio, largo]; 0 = ese día no se toma
+const LVI={bajo:0,medio:1,alto:2};
+const DES={
+  A:{n:"Tostadas con huevo",items:[["Pan integral o de centeno",[60,90,120],"g"],["Huevos",[2,2,3],"ud"],["Claras de huevo",[100,100,100],"g"],["Tomate rallado y AOVE","1 cucharadita"],["Kiwi o naranja",[1,1,1],"ud"],["Café o té",""]],tip:"Los días de descanso o fuerza: más proteína y menos hidratos."},
+  B:{n:"Avena con skyr y plátano",tag:"Nuevo",items:[["Copos de avena",[40,70,100],"g"],["Skyr o yogur griego natural",[250,250,250],"g"],["Plátano",[1,1,1],"ud"],["Nueces",[10,10,15],"g"],["Canela al gusto",""],["Café o té",""]],tip:"Prepárala la noche antes en un tarro: por la mañana solo hay que cogerla. Si un día vas con prisa, esta es la opción."}
+};
+const MM={n:"Skyr, fruta y nueces",items:[["Yogur proteico o skyr",[1,1,1],"ud (150 g)"],["Manzana u otra fruta",[1,1,1],"ud"],["Nueces o almendras",[15,15,15],"g"],["Mini bocadillo integral con pavo",[0,40,60],"g de pan"]],tip:"Siempre lo mismo. Así llegas a la comida sin hambre y no picas."};
+const MER={n:"Sándwich de pavo y queso",items:[["Pan integral de molde",[2,2,3],"rebanadas"],["Pavo en lonchas",[60,60,80],"g"],["Queso fresco o light",[1,1,1],"loncha"],["Plátano (si entrenas)",[0,1,1],"ud"]],tip:"Tu merienda de siempre, a una hora fija y antes del rodillo. Con ella llegas con energía y sin ganas de picar."};
+const WEEK=[
+ {comida:{n:"Lentejas con verduras y huevo",tag:"De casa",items:[["Lentejas (en crudo)",[60,80,100],"g"],["Verduras del guiso: zanahoria, pimiento, puerro",""],["Huevo cocido",[1,1,1],"ud"],["AOVE",[10,10,10],"g"],["Postre: fruta",""]],tip:"Acompaña con pimiento o una naranja de postre: la vitamina C ayuda a absorber el hierro de las lentejas."},
+  cena:{n:"Pechuga a la plancha con patata y verdura",tag:"De casa",items:[["Pechuga de pollo o pavo",[160,160,180],"g"],["Patata cocida o al horno",[150,250,350],"g"],["Verdura: judías verdes o brócoli",""],["AOVE",[10,10,10],"g"],["Postre: yogur natural",""]]}},
+ {comida:{n:"Sopa de fideos y zancarrón con tomate",tag:"De casa",items:[["Caldo de verduras y zancarrón, desgrasado",""],["Fideos (en crudo)",[30,50,70],"g"],["Zancarrón",[150,150,180],"g"],["Tomate frito casero o sin azúcar",[2,2,2],"cucharadas"],["Ensalada verde",""],["Postre: fruta",""]],tip:"Deja enfriar el caldo y quita la capa de grasa de arriba: mismo sabor, bastante menos grasa."},
+  cena:{n:"Bocadillo de tortilla francesa de pavo y queso",tag:"De casa",items:[["Pan integral de barra",[60,90,110],"g"],["Huevos",[2,2,2],"ud"],["Clara",[1,1,1],"ud"],["Pavo",[40,40,40],"g"],["Queso",[1,1,1],"loncha"],["Tomate en rodajas o ensalada",""],["Postre: yogur natural",""]]}},
+ {comida:{n:"Garbanzos salteados con espinacas y huevo",tag:"Nuevo",items:[["Garbanzos de bote, escurridos",[200,250,300],"g"],["Espinacas frescas",[100,100,100],"g"],["Huevos",[2,2,2],"ud"],["Ajo, pimentón y comino",""],["AOVE",[10,10,10],"g"],["Postre: fruta",""]],tip:"10 minutos: sofríe ajo, añade los garbanzos y el pimentón, luego las espinacas y casca los huevos encima."},
+  cena:{n:"Salmón al horno con patata y brócoli",tag:"Nuevo",items:[["Salmón",[150,150,170],"g"],["Patata",[150,250,350],"g"],["Brócoli",[200,200,200],"g"],["Limón y eneldo",""],["Postre: yogur natural",""]],tip:"Pescado azul una o dos veces por semana: omega-3, bueno para recuperar y para el corazón."}},
+ {comida:{n:"Ensalada de pasta completa",tag:"De casa",items:[["Pasta integral (en crudo)",[60,90,110],"g"],["Atún al natural",[2,2,2],"latas"],["Huevo cocido",[1,1,1],"ud"],["Lechuga, tomate, cebolla y maíz",""],["AOVE",[10,10,10],"g"],["Postre: fruta",""]],tip:"Con dos latas de atún y un huevo, la ensalada pasa de ligera a comida completa."},
+  cena:{n:"Tortilla de patata con ensalada",tag:"De casa",items:[["Tortilla de patata de 5 huevos",["1/4","1/3","1/3"],"de tortilla"],["Ensalada grande",""],["Pan",[0,40,60],"g"],["Postre: yogur natural",""]],tip:"Haz la patata al horno o al microondas en vez de freírla: queda igual con la mitad de aceite."}},
+ {comida:{n:"Macarrones con boloñesa de pavo",tag:"Nuevo",items:[["Macarrones (en crudo)",[70,100,120],"g"],["Carne picada de pavo o ternera magra",[120,120,140],"g"],["Tomate triturado, cebolla y zanahoria",""],["Queso rallado",[10,10,10],"g"],["Ensalada verde",""],["Postre: fruta",""]],tip:"Tus macarrones con tomate, con proteína añadida. Ideales el día antes de la salida larga."},
+  cena:{n:"Lomo con verduras y arroz",tag:"De casa",items:[["Lomo de cerdo a la plancha",[150,150,170],"g"],["Arroz (en crudo)",[40,60,80],"g"],["Verduras salteadas",""],["AOVE",[10,10,10],"g"],["Postre: yogur natural",""]]}},
+ {comida:{n:"Arroz con verduras y huevo",tag:"Provisional",items:[["Arroz (en crudo)",[70,100,130],"g"],["Verduras salteadas",""],["Huevos",[2,2,2],"ud"],["AOVE",[10,10,10],"g"],["Postre: fruta",""]],tip:"Después de la salida larga: hidratos y proteína en la primera hora. Lo ajustaré cuando me cuentes vuestros fines de semana."},
+  cena:{n:"Merluza a la plancha con patata y ensalada",tag:"Provisional",items:[["Merluza o bacalao",[180,180,200],"g"],["Patata",[150,250,350],"g"],["Ensalada",""],["AOVE",[10,10,10],"g"],["Postre: yogur natural",""]]}},
+ {comida:{n:"Pollo al horno con patatas",tag:"Provisional",items:[["Pollo sin piel",[180,180,200],"g"],["Patata al horno",[150,250,350],"g"],["Pimiento y cebolla al horno",""],["Postre: fruta",""]]},
+  cena:{n:"Pizza casera de verduras, pavo y queso",tag:"De casa",items:[["Pizza casera",["1/3","1/2","1/2"],"de pizza"],["Ensalada grande",""],["Postre: fruta",""]],tip:"Mitad de harina integral en la masa, mucha verdura y mozzarella ligera: sigue siendo pizza y sacia más."}}
+];
+const COMPRA=[
+ ["Fruta y verdura",["Plátanos (7)","Manzanas (7)","Kiwis o naranjas (7)","Limones","Patatas (3 kg)","Lechuga o mezcla de ensalada","Tomates","Cebollas","Zanahorias","Pimientos","Puerro","Brócoli","Espinacas frescas","Judías verdes","Ajos"]],
+ ["Carne y pescado",["Pechuga de pollo o pavo (500 g)","Pavo en lonchas (400 g)","Zancarrón (1 pieza)","Carne picada de pavo o ternera magra (300 g)","Lomo de cerdo (300 g)","Salmón (2 lomos)","Merluza o bacalao (400 g)","Pollo para el domingo"]],
+ ["Huevos y lácteos",["Huevos (2 docenas)","Claras de huevo (1 brick)","Skyr o yogur griego natural (1,5 kg)","Yogures proteicos (7)","Yogures naturales (7)","Queso fresco o light en lonchas","Mozzarella ligera y queso rallado","Kéfir o leche (1 l)"]],
+ ["Despensa",["Copos de avena (500 g)","Pan integral de molde","Pan integral de barra","Lentejas (500 g)","Garbanzos cocidos (2 botes)","Atún al natural (4 latas)","Pasta integral y macarrones","Fideos","Arroz","Tomate triturado y tomate frito sin azúcar","Maíz","Harina integral (pizza)","Nueces o almendras (200 g)","AOVE, pimentón, comino y canela"]]
+];
+function qtyTxt(q,li,u){if(Array.isArray(q)){const v=q[li];if(v===0||v==null)return null;return v+(u?" "+u:"")}return q||""}
+function mealCard(icon,label,time,m,li,idx,L,extra){
+  const items=m.items.map(([n,q,u])=>{const t=qtyTxt(q,li,u);if(t===null)return "";return '<li><span>'+esc(n)+'</span>'+(t?'<b class="num">'+esc(t)+'</b>':'')+'</li>'}).join("");
+  const ck=(L.meals||[])[idx];
+  return '<div class="mcard'+(ck?" done":"")+'"><div class="mhead"><span class="mic">'+icon+'</span><div class="mt"><span class="lbl">'+label+' · '+time+'</span><b>'+esc(m.n)+'</b></div>'+(m.tag?'<span class="tag t-'+m.tag.toLowerCase().replace(/\s/g,"")+'">'+m.tag+'</span>':'')+'<input type="checkbox" data-meal="'+idx+'" '+(ck?"checked":"")+' aria-label="'+esc(label)+' hecho"></div>'+(extra||'')+'<ul class="mitems">'+items+'</ul>'+(m.tip?'<p class="mtip">'+esc(m.tip)+'</p>':'')+'</div>';
+}
+function renderDieta(){
+  const p=planFor(cur), t=targets(p), L=getLog(cur), li=LVI[t.lv]||0, w=WEEK[dow(cur)];
+  const des=L.des||(p.kind==="ride"?"B":"A");
+  const lvTxt=["Día suave, de fuerza o descanso","Día de entreno (1–2,5 h)","Día de salida larga"][li];
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+='<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(p.t)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
+  h+='<section class="card hero"><span class="lbl">Objetivo del día · '+lvTxt+'</span><div class="big num">'+t.kcal+'<small> kcal</small></div>'+macroBar(t)+'<div class="kpis">'+kpi(t.c,"g","Hidratos")+kpi(t.pr,"g","Proteína")+kpi(t.fa,"g","Grasa")+'</div><p class="muted" style="margin:0;font-size:13px">Las cantidades de abajo ya están ajustadas al entreno de hoy. Cambian sobre todo los hidratos: pan, avena, arroz, pasta y patata.</p></section>';
+  const sw='<div class="seg" role="group" aria-label="Elige desayuno"><button data-des="A" aria-pressed="'+(des==="A")+'">Tostadas</button><button data-des="B" aria-pressed="'+(des==="B")+'">Avena</button></div>';
+  h+='<section class="card meals">';
+  h+=mealCard("🍳","Desayuno","7:00",DES[des],li,0,L,sw);
+  h+=mealCard("🍎","Media mañana","10:30",MM,li,1,L);
+  h+=mealCard("🥗","Comida","14:00",w.comida,li,2,L);
+  h+=mealCard("🥪","Merienda","17:15",MER,li,3,L);
+  if(p.kind==="ride"){const long=p.m>=75;h+='<div class="mnote"><b>🚴 Durante el entreno</b>'+(long?(li===2?' 60–90 g de hidratos por hora (geles, barritas o bidón con hidratos) y 500–750 ml de líquido con sales por hora.':' Bidón con 30–40 g de hidratos por hora y sales.'):' Agua con sales. Con la merienda llegas sobrado.')+'<br><b>🥛 Al acabar</b> Si vas a cenar más de una hora después, toma un vaso de leche o kéfir.</div>'}
+  h+=mealCard("🍽️","Cena","21:00",w.cena,li,4,L);
+  h+=mealCard("🌙","Antes de dormir · opcional","23:00",{n:"Kéfir o requesón",items:[["Kéfir o requesón",[200,200,250],"g"]],tip:"Solo si tienes hambre o has entrenado fuerte: proteína lenta mientras duermes."},li,5,L);
+  h+='</section>';
+  h+='<details class="card"><summary class="lbl" style="cursor:pointer">🛒 Lista de la compra semanal (Eroski)</summary><p class="muted" style="font-size:13px;margin:8px 0">Cantidades para ti. Multiplícalas si coméis lo mismo en casa.</p>'+COMPRA.map(([g,xs])=>'<div class="shop"><b>'+g+'</b><ul>'+xs.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>').join("")+'</details>';
+  h+='<details class="card"><summary class="lbl" style="cursor:pointer">💡 Por qué está montado así</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:14px"><li><b>Desayunar siempre</b>: saltarte el desayuno es lo que te hace llegar a la tarde con hambre y picar.</li><li><b>Proteína en cada comida</b> (25–40 g): es lo que más sacia y lo que protege el músculo mientras pierdes grasa.</li><li><b>Los hidratos siguen al entreno</b>: más los días de bici y menos los de descanso. Así pierdes grasa sin quedarte sin energía.</li><li><b>Mismas comidas pequeñas cada día</b>: menos decisiones, compra más fácil y menos tentaciones.</li><li><b>Nada prohibido</b>: la pizza del domingo se queda. Las dietas rígidas acaban en atracones más a menudo.</li></ul></details>';
+  h+='</div>';
+  $view.innerHTML=h;
+  document.getElementById("prev").onclick=()=>{cur=addDays(cur,-1);render()};
+  document.getElementById("next").onclick=()=>{cur=addDays(cur,1);render()};
+  $view.querySelectorAll("[data-des]").forEach(b=>b.onclick=()=>{setLog(cur,{des:b.dataset.des});render()});
+  $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr});cb.closest(".mcard").classList.toggle("done",cb.checked)}));
 }
 
 function render(){
