@@ -199,6 +199,25 @@ header.top{flex-wrap:nowrap;align-items:center}
 .logo{width:52px;height:52px}
 .countchip{min-width:70px;padding:8px 10px;flex:none}
 .countchip b{font-size:24px}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpis.k4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:420px){.kpis.k4{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface-2);border-radius:14px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .num{font-size:22px;font-weight:700;color:var(--fg);line-height:1.1}
+.kpi .num small{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .lbl{font-size:10px}
+.dl{font-size:11px;font-weight:700;color:var(--muted)}
+.dl.up{color:var(--ok)}.dl.down{color:var(--z5)}
+.sub{font-size:12px;font-weight:600;color:var(--muted);margin-top:4px}
+.ftphist{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}
+.ftpnote{background:linear-gradient(135deg,var(--pine),#7c3aed);color:#fff;border:0}
+.ftpnote .big{font-size:34px;font-weight:700;line-height:1}
+.ftpnote .big small{font-size:15px;opacity:.85}
+.ftpnote .btn{background:rgba(255,255,255,.18);border-color:transparent;color:#fff}
+details.adv summary{cursor:pointer;font-weight:600;color:var(--muted);list-style:none}
+details.adv summary::before{content:"⚙️  "}
+details.adv[open] summary{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -241,7 +260,7 @@ const ZDESC = {Z1:"Recuperación",Z2:"Fondo aeróbico",Z3:"Tempo",SS:"Sweet spot
 
 const Q = {
   pre:{tue:{t:"Rodillo Z2 suave",m:45,z:"Z2",zones:["Z2"],d:"45' en Z2 para recordar sensaciones. Nada de apretar."},
-       thu:{t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. FTP ≈ 75% de tu mejor minuto. Es más llevadero que el test de 20' tras meses parado. Apunta el FTP en Semana → Ajustes."},
+       thu:{t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. FTP ≈ 75% de tu mejor minuto. Es más llevadero que el test de 20' tras meses parado. La app calcula tu FTP sola al sincronizar."},
        fri:{t:"Descanso",m:0,rest:true},
        sat:{t:"MTB Z2",m:90,z:"Z2",zones:["Z2"],d:"1h30 en Z2. Subidas tranquilas, sin cebarse."},
        sun:{t:"Carretera Z2",m:75,z:"Z2",zones:["Z2"],d:"1h15 en Z2, terreno cómodo."}},
@@ -360,7 +379,7 @@ const MENUS = {
 
 const IV = {id:"", key:""};
 // ---------- estado ----------
-const DEFAULT_SET = {ftp:192, peso:73, strDay:2, ftpExample:true, v:3, p20:[{date:"2026-08-04",w:216},{date:"2026-09-26",w:192},{date:"2026-10-01",w:180},{date:"2026-10-05",w:183},{date:"2026-10-14",w:185},{date:"2026-10-30",w:204}]};
+const DEFAULT_SET = {ftp:192, peso:73, strDay:2, ftpExample:true, v:4, ftpHist:[{date:"2026-11-04",ftp:192,src:"historial"}]};
 let settings = Object.assign({}, DEFAULT_SET);
 let logs = {};
 let view = "hoy";
@@ -386,7 +405,7 @@ function longDate(k){const t=parse(k).toLocaleDateString("es-ES",{weekday:"long"
 const OV = {
   "2026-11-03":{kind:"rest",t:"Sin entrenar",m:0,z:"Z1",zones:[],d:"Hoy no ha habido entreno. No se recupera: la semana se reorganiza a partir de mañana."},
   "2026-11-04":{key:"pre.tue",f:1,kind:"ride",t:"Rodillo Z2 suave",m:45,z:"Z2",zones:["Z2"],d:"45' en Z2 para recordar sensaciones y soltar piernas antes del test. Nada de apretar.",place:"Rodillo"},
-  "2026-11-05":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. FTP ≈ 75% de tu mejor minuto. Apúntalo en Semana → Ajustes.",place:"Rodillo"},
+  "2026-11-05":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. La app calcula tu FTP sola al sincronizar (75 % de tu mejor minuto).",place:"Rodillo"},
   "2026-11-06":{kind:"str",t:"Fuerza · primera toma de contacto",m:30,z:"str",zones:[],d:"Circuito de adaptación con 2 series y pesos muy ligeros. Va después del test y no antes, para que las agujetas no estropeen la medición.",place:"Gimnasio en casa"}
 };
 function planFor(k){
@@ -459,7 +478,7 @@ function workoutText(p){
 }
 function level(p){ if(p.kind!=="ride"||p.m<60) return "bajo"; if(p.m<=150) return "medio"; return "alto"; }
 function targets(p){
-  const kg = settings.peso, lv = level(p);
+  const kg = curKg(), lv = level(p);
   let cho = p.kind==="rest"? 2 : lv==="bajo"? (p.kind==="str"?4:3) : lv==="medio"? (p.m<=75?5:6) : (p.m>=210?8:7);
   const pro = 2.2, fat = lv==="bajo"?0.9:1.0;
   const c=Math.round(cho*kg), pr=Math.round(pro*kg), fa=Math.round(fat*kg);
@@ -479,7 +498,7 @@ function persist(id,obj){
   lsSet("ep-"+id,obj); const all=lsGet("ep-index")||[]; if(!all.includes(id)){all.push(id);lsSet("ep-index",all)}
   flash("Guardado en este teléfono");
 }
-function migrate(s){ if(!s.v){ if(s.ftpExample && s.ftp===250) s.ftp=195; s.v=2; } if(s.v<3){ s.ftp=192; s.v=3; } return s; }
+function migrate(s){ if(!s.v){ if(s.ftpExample && s.ftp===250) s.ftp=195; s.v=2; } if(s.v<3){ s.ftp=192; s.v=3; } if(s.v<4){ s.ftpHist=[{date:"2026-11-04",ftp:s.ftp||192,src:"historial"}]; s.v=4; } return s; }
 function saveSettings(){ lsSet("ep-settings",settings); }
 function flash(t){document.getElementById("saveState").textContent=t}
 
@@ -498,6 +517,7 @@ function renderHoy(){
   const ph = phaseOf(cur);
   let h = '<div style="display:flex;flex-direction:column;gap:16px">';
   h += '<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(ph.name)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
+  if(cur===todayKey()) h+=ftpBanner();
   if(cur!==todayKey()) h+='<button class="btn" id="goToday" style="align-self:center">Volver a hoy</button>';
   if(IV.id&&IV.key) h+='<div class="row" style="justify-content:center;gap:10px"><button class="btn" id="syncBtn">Sincronizar con intervals.icu</button><span class="muted" id="syncMsg" style="font-size:12px">'+esc(syncNote)+'</span></div>';
   // sesión
@@ -520,8 +540,6 @@ function renderHoy(){
   h += '<section class="card"><span class="lbl">Registro del día</span><div class="fields">';
   h += '<label class="f">Peso en ayunas (kg)<input type="number" step="0.1" id="peso" inputmode="decimal" value="'+(L.peso??"")+'" placeholder="'+settings.peso+'"></label>';
   h += '<label class="f">Horas de sueño<input type="number" step="0.5" id="sueno" inputmode="decimal" value="'+(L.sueno??"")+'" placeholder="7.5"></label>';
-  h += '<label class="f">Potencia media (W)<input type="number" id="np" inputmode="numeric" value="'+(L.np??"")+'" placeholder="Opcional"></label>';
-  h += '<label class="f">Cintura (cm, lunes)<input type="number" step="0.5" id="cintura" inputmode="decimal" value="'+(L.cintura??"")+'" placeholder="A la altura del ombligo"></label>';
   h += '<label class="f">Hambre o ansiedad<select id="hambre"><option value="">–</option>'+["1 · Nada","2 · Poca","3 · Normal","4 · Bastante","5 · Mucha"].map((o,i)=>'<option value="'+(i+1)+'"'+(L.hambre===i+1?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
   h += '<label class="f">Sensación<select id="sens"><option value="">–</option>'+["Muy bien","Bien","Normal","Cansado","Muy cansado"].map(o=>'<option'+(L.sens===o?" selected":"")+'>'+o+'</option>').join("")+'</select></label>';
   h += '</div><label class="f">Notas<textarea id="notas" placeholder="Molestias, tiempo, ruta…">'+esc(L.notas||"")+'</textarea></label></section>';
@@ -534,18 +552,19 @@ function renderHoy(){
   on("next","click",()=>{cur=addDays(cur,1);render()});
   on("goToday","click",()=>{cur=todayKey();render()});
   on("toDieta","click",()=>setView("dieta"));
+  bindFtpBanner();
   on("syncBtn","click",()=>syncIV(false));
   $view.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>loadDetail(cur,+b.dataset.load));
   on("toStr","click",()=>setView("fuerza"));
   on("sendIv","click",()=>{const msg=document.getElementById("copyMsg");msg.textContent="Enviando…";
-    sendToIntervals(cur).then(()=>{msg.textContent="Enviado. Revisa el calendario de intervals.icu."}).catch(err=>{msg.textContent=err.message==="http 401"||err.message==="http 403"?"Clave o ID incorrectos. Revisa Semana → Ajustes.":"No se pudo enviar (puede bloquearlo el navegador). Usa Copiar entreno."})});
+    sendToIntervals(cur).then(()=>{msg.textContent="Enviado. Revisa el calendario de intervals.icu."}).catch(err=>{msg.textContent=err.message==="http 401"||err.message==="http 403"?"Clave o ID incorrectos. Revísalos en Semana → Avanzado.":"No se pudo enviar (puede bloquearlo el navegador). Usa Copiar entreno."})});
   on("copyWk","click",()=>{const txt=document.getElementById("wkText").textContent,msg=document.getElementById("copyMsg");
     const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("wkText"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Texto seleccionado: cópialo con el menú del móvil."};
     try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent="Copiado. Pégalo en intervals.icu."},sel)}catch(e){sel()}});
   on("done","change",e=>setLog(cur,{done:e.target.checked,min:e.target.checked?p.m:0}));
   on("rpe","input",e=>{document.getElementById("rpeV").textContent=e.target.value;setLog(cur,{rpe:+e.target.value})});
   on("hambre","change",e=>setLog(cur,{hambre:e.target.value?+e.target.value:null}));
-  ["peso","sueno","np","cintura"].forEach(id=>on(id,"input",e=>{const v=e.target.value===""?null:+e.target.value;setLog(cur,{[id]:v})}));
+  ["peso","sueno"].forEach(id=>on(id,"input",e=>{const v=e.target.value===""?null:+e.target.value;setLog(cur,{[id]:v})}));
   on("sens","change",e=>setLog(cur,{sens:e.target.value}));
   on("notas","input",e=>setLog(cur,{notas:e.target.value}));
   $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr})}));
@@ -567,22 +586,18 @@ function renderSemana(){
   h+='<section class="card week">'+rows+'</section>';
   h+='<section class="card"><span class="lbl">Ajustes</span><div class="fields">';
   h+='<label class="f">Día de fuerza<select id="strDay">'+DOW.map((d,i)=>'<option value="'+i+'"'+(i===settings.strDay?" selected":"")+'>'+d+'</option>').join("")+'</select></label>';
-  h+='<label class="f">FTP (W)'+(settings.ftpExample?' <span style="color:var(--warn)">· estimado de tu historial, confírmalo con el test</span>':'')+'<input type="number" id="ftp" inputmode="numeric" value="'+settings.ftp+'"></label>';
-  h+='<label class="f">Peso de referencia (kg)<input type="number" step="0.1" id="pesoRef" inputmode="decimal" value="'+settings.peso+'"></label>';
-  h+='</div><div class="note">Evita poner la fuerza el día antes de la sesión de intervalos (martes o jueves) o de la salida larga: llegarás con las piernas cargadas. Lo ideal es miércoles o lunes.</div></section>';
-  h+='<section class="card"><span class="lbl">intervals.icu (opcional)</span><div class="fields"><label class="f">ID de atleta<input type="text" id="ivId" value="'+esc(IV.id)+'" placeholder="i12345"></label><label class="f">Clave API<input type="password" id="ivKey" value="'+esc(IV.key)+'" placeholder="Settings → Developer"></label></div><div class="row"><button class="btn" id="ivSave">Guardar</button><span class="muted" id="ivMsg" style="font-size:13px"></span></div><div class="note">Se guardan solo en este teléfono. Al enviar un entreno, se crea en tu calendario de intervals.icu.</div></section>';
-  h+='<section class="card"><span class="lbl">Copia de seguridad</span><p class="muted" style="margin:0">Tus datos están solo en este teléfono. Expórtalos antes de cambiar de móvil.</p><div class="row"><button class="btn" id="expBtn">Exportar datos</button><label class="btn" style="cursor:pointer">Importar<input type="file" id="impFile" accept="application/json" hidden></label><span class="muted" id="bkMsg" style="font-size:13px"></span></div></section>';
+  h+='</div><div class="note">Evita poner la fuerza el día antes de la sesión de intervalos (martes o jueves) o de la salida larga: llegarás con las piernas cargadas. Lo ideal es miércoles o lunes. El FTP y el peso se calculan solos.</div></section>';
+  h+='<details class="card adv"><summary>Avanzado · conexión con intervals.icu y copia de seguridad</summary><span class="lbl">intervals.icu</span><div class="fields"><label class="f">ID de atleta<input type="text" id="ivId" value="'+esc(IV.id)+'" placeholder="i12345"></label><label class="f">Clave API<input type="password" id="ivKey" value="'+esc(IV.key)+'" placeholder="Settings → Developer"></label></div><div class="row"><button class="btn" id="ivSave">Guardar</button><span class="muted" id="ivMsg" style="font-size:13px"></span></div><div class="note">Se guardan solo en este teléfono. Sirven para sincronizar tus salidas.</div>';
+  h+='<span class="lbl" style="margin-top:8px">Copia de seguridad</span><p class="muted" style="margin:0">Tus datos están solo en este teléfono. Expórtalos antes de cambiar de móvil.</p><div class="row"><button class="btn" id="expBtn">Exportar datos</button><label class="btn" style="cursor:pointer">Importar<input type="file" id="impFile" accept="application/json" hidden></label><span class="muted" id="bkMsg" style="font-size:13px"></span></div></details>';
   h+='<section class="card"><span class="lbl">Fases hasta junio</span><div class="phases">'+PHASES.map(p=>'<div class="ph'+(p.id===ph.id?" now":"")+'"><b>'+esc(p.name)+'</b><span class="num muted" style="font-size:12px">'+parse(p.from).toLocaleDateString("es-ES",{day:"numeric",month:"short"})+' – '+parse(p.to).toLocaleDateString("es-ES",{day:"numeric",month:"short"})+'</span></div>').join("")+'</div></section></div>';
   $view.innerHTML=h;
   document.getElementById("pw").onclick=()=>{cur=addDays(cur,-7);render()};
   document.getElementById("nw").onclick=()=>{cur=addDays(cur,7);render()};
   $view.querySelectorAll(".wday").forEach(el=>{const go=()=>{cur=el.dataset.k;setView("hoy")};el.onclick=go;el.onkeydown=e=>{if(e.key==="Enter")go()}});
   document.getElementById("strDay").onchange=e=>{settings.strDay=+e.target.value;saveSettings();render()};
-  document.getElementById("ftp").onchange=e=>{const v=+e.target.value;if(v>80&&v<600){settings.ftp=v;settings.ftpExample=false;saveSettings();render()}};
   document.getElementById("ivSave").onclick=()=>{saveIV(document.getElementById("ivId").value,document.getElementById("ivKey").value);document.getElementById("ivMsg").textContent="Guardado";render()};
   document.getElementById("expBtn").onclick=()=>{const data={v:2,settings,logs};const blob=new Blob([JSON.stringify(data)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="entrenamiento-"+todayKey()+".json";document.body.appendChild(a);a.click();a.remove();document.getElementById("bkMsg").textContent="Archivo descargado"};
   document.getElementById("impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);if(!d.logs||!d.settings) throw new Error();Object.keys(d.logs).forEach(id=>{logs[id]=d.logs[id];lsSet("ep-"+id,d.logs[id])});settings=Object.assign({},DEFAULT_SET,migrate(Object.assign({},d.settings)));saveSettings();const idx=lsGet("ep-index")||[];Object.keys(logs).forEach(id=>{if(!idx.includes(id))idx.push(id)});lsSet("ep-index",idx);document.getElementById("bkMsg").textContent="Importado";render()}).catch(()=>{document.getElementById("bkMsg").textContent="Archivo no válido"})};
-  document.getElementById("pesoRef").onchange=e=>{const v=+e.target.value;if(v>40&&v<150){settings.peso=v;saveSettings();render()}};
 }
 
 function strDateFor(k){ // día de fuerza de la semana de k
@@ -609,95 +624,10 @@ function renderFuerza(){
   document.getElementById("sdone").onchange=e=>setLog(k,{done:e.target.checked,min:e.target.checked?50:0});
 }
 
-function renderProgreso(){
-  const all = Object.values(logs).filter(l=>l&&l.date).sort((a,b)=>a.date<b.date?-1:1);
-  const pts = all.filter(l=>typeof l.peso==="number").slice(-60);
-  const last28 = all.filter(l=>diffDays(l.date,todayKey())<28&&diffDays(l.date,todayKey())>=0);
-  let plan28=0; for(let i=0;i<28;i++){plan28+=planFor(addDays(todayKey(),-i)).m}
-  const done28 = last28.reduce((s,l)=>s+(l.done?(l.min||0):0),0);
-  const sl = last28.filter(l=>l.sueno); const sAvg = sl.length?(sl.reduce((s,l)=>s+l.sueno,0)/sl.length).toFixed(1):"–";
-  const cw = all.filter(l=>typeof l.cintura==="number");
-  const cTxt = cw.length? cw[cw.length-1].cintura+(cw.length>1?' <small class="muted">('+((cw[cw.length-1].cintura-cw[0].cintura)>0?"+":"")+(cw[cw.length-1].cintura-cw[0].cintura).toFixed(1)+')</small>':""):"–";
-  const avgW=(from,to)=>{const w=all.filter(l=>typeof l.peso==="number"&&diffDays(l.date,todayKey())>=from&&diffDays(l.date,todayKey())<to);return w.length?w.reduce((s,l)=>s+l.peso,0)/w.length:null};
-  const w1=avgW(0,7), w0=avgW(7,14); const trend=(w1!=null&&w0!=null)?((w1-w0>0?"+":"")+(w1-w0).toFixed(1)+" kg"):"–";
-  const hw = all.filter(l=>l.hambre&&diffDays(l.date,todayKey())<7); const hAvg = hw.length?(hw.reduce((s,l)=>s+l.hambre,0)/hw.length).toFixed(1):"–";
-  let h='<div style="display:flex;flex-direction:column;gap:16px">';
-  h+='<div class="stats"><div class="stat"><span class="num">'+cTxt+'</span><span class="lbl">Cintura (cm)</span></div><div class="stat"><span class="num">'+hAvg+'</span><span class="lbl">Hambre media 7 d</span></div><div class="stat"><span class="num">'+trend+'</span><span class="lbl">Media 7 d vs anterior</span></div></div>';
-  h+='<div class="stats"><div class="stat"><span class="num">'+(pts.length?pts[pts.length-1].peso.toFixed(1):"–")+'</span><span class="lbl">Peso actual</span></div><div class="stat"><span class="num">'+(plan28?Math.round(done28/plan28*100):0)+'%</span><span class="lbl">Cumplido 28 d</span></div><div class="stat"><span class="num">'+sAvg+'</span><span class="lbl">Sueño medio</span></div></div>';
-  h+='<section class="card"><span class="lbl">Evolución del peso</span>';
-  if(pts.length<2){ h+='<p class="muted">Apunta tu peso en ayunas en la pestaña Hoy. Con dos registros aparece aquí la gráfica.</p>'; }
-  else {
-    const W=640,H=220,pl=40,pr=16,pt=16,pb=28;
-    const ys=pts.map(p=>p.peso), mn=Math.floor(Math.min(...ys)-0.5), mx=Math.ceil(Math.max(...ys)+0.5);
-    const t0=parse(pts[0].date).getTime(), t1=parse(pts[pts.length-1].date).getTime()||t0+1;
-    const X=d=>pl+(parse(d).getTime()-t0)/((t1-t0)||1)*(W-pl-pr), Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
-    let g=''; for(let v=mn;v<=mx;v++){g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>'}
-    const line=pts.map((p,i)=>(i?"L":"M")+X(p.date).toFixed(1)+" "+Y(p.peso).toFixed(1)).join(" ");
-    const area=line+" L"+X(pts[pts.length-1].date).toFixed(1)+" "+(H-pb)+" L"+X(pts[0].date).toFixed(1)+" "+(H-pb)+" Z";
-    const lp=pts[pts.length-1];
-    g+='<path d="'+area+'" fill="var(--pine)" opacity=".12"/><path d="'+line+'" fill="none" stroke="var(--pine)" stroke-width="2"/>';
-    g+='<circle cx="'+X(lp.date)+'" cy="'+Y(lp.peso)+'" r="4" fill="var(--ember)"/>';
-    g+='<text x="'+pl+'" y="'+(H-8)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+pts[0].date.slice(5)+'</text><text x="'+(W-pr)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+lp.date.slice(5)+'</text>';
-    h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Evolución del peso">'+g+'</svg></div>';
-    const ch=(lp.peso-pts[0].peso).toFixed(1);
-    h+='<p class="muted">Cambio desde '+pts[0].date.slice(8)+'/'+pts[0].date.slice(5,7)+': <b class="num" style="color:var(--fg)">'+(ch>0?"+":"")+ch+' kg</b>. Fíjate en la tendencia semanal, no en el día a día: el agua y el glucógeno mueven ±1 kg.</p>';
-  }
-  h+='</section>';
-  h+='<section class="card"><span class="lbl">Punto de partida · tu historial de Garmin</span><div class="stats"><div class="stat"><span class="num">~230 W</span><span class="lbl">FTP feb 2026</span></div><div class="stat"><span class="num">~195 W</span><span class="lbl">FTP estimado hoy</span></div><div class="stat"><span class="num">1/sem</span><span class="lbl">Salidas desde julio</span></div></div><p class="muted" style="margin:0">En febrero hacías 5–7 salidas por semana y tu mejor potencia de 20 minutos llegó a 242 W. Entre abril y finales de julio no hay actividad, y desde entonces sales una vez por semana, unos 60–80 minutos, con picos de 20 minutos de 204–216 W. Por eso las 4 primeras semanas suben poco a poco y terminan con un nuevo test.</p></section>';
-  h+=historialHTML();
-  h+=graficosHTML();
-  h+='<section class="card"><span class="lbl">Integraciones</span><p class="muted" style="margin:0">De momento el registro es manual. La conexión con intervals.icu (que recoge lo de Garmin) es el siguiente paso; TrainingPeaks no ofrece API a particulares. La báscula Xiaomi/Renpho no tiene conexión directa: el peso se apunta aquí.</p></section></div>';
-  $view.innerHTML=h;
-  $view.querySelectorAll(".hrow").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
-}
 
 const IF_Z={Z1:.5,Z2:.65,Z3:.8,Z4:.9,Z5:1,str:.4};
 function loadDay(k){const L=getLog(k),p=planFor(k);if(L.acts&&L.acts.length)return{min:L.acts.reduce((s,a)=>s+a.mov,0)/60,tss:L.acts.reduce((s,a)=>s+(a.load||0),0)};if(!p.m||p.kind==="rest"||!L.done)return{min:0,tss:0};const mins=L.min>0?L.min:p.m;const IF=IF_Z[p.z]||.65;return{min:mins,tss:mins*IF*IF/60*100}}
 function pmc(from,to){let ctl=0,atl=0;const out=[];for(let k=from;parse(k)<=parse(to);k=addDays(k,1)){const t=loadDay(k).tss;ctl+=(t-ctl)/42;atl+=(t-atl)/7;out.push({k,ctl,atl,tsb:ctl-atl})}return out}
-function ftpAdvice(){
-  const today=todayKey(); const recent=(settings.p20||[]).filter(e=>{const d=diffDays(e.date,today);return d>=0&&d<=42});
-  if(!recent.length) return {est:null,msg:"Sin datos de los últimos 42 días. Lo reviso con tus próximos entrenos de intervals.icu."};
-  const best=Math.max(...recent.map(e=>e.w)); const est=Math.round(best*.95);
-  if(est>=settings.ftp+5) return {est,msg:"Tu potencia sugiere un FTP de unos "+est+" W, por encima de los "+settings.ftp+" W. Confírmalo con un segundo test antes de subir."};
-  if(est<=settings.ftp-8) return {est,msg:"Tu forma reciente sugiere unos "+est+" W, por debajo de tu FTP. Mantén el FTP y vigila la fatiga antes de subir cargas."};
-  return {est,msg:"Tu FTP de "+settings.ftp+" W está bien: tu mejor 20' reciente da unos "+est+" W. No lo subas todavía."};
-}
-function graficosHTML(){
-  const today=todayKey();
-  let h='<section class="card"><span class="lbl">Carga de entrenamiento · estilo Training Peaks</span>';
-  if(parse(today)<parse(START)){return h+'<p class="muted" style="margin:0">Las gráficas empiezan el 9 de noviembre, cuando arranca la vuelta progresiva.</p></section>'}
-  const rows=pmc(START,today), last=rows[rows.length-1], n=rows.length;
-  h+='<div class="stats"><div class="stat"><span class="num" style="color:var(--pine)">'+Math.round(last.ctl)+'</span><span class="lbl">Forma crónica (CTL)</span></div><div class="stat"><span class="num" style="color:var(--ember)">'+Math.round(last.atl)+'</span><span class="lbl">Fatiga aguda (ATL)</span></div><div class="stat"><span class="num">'+(last.tsb>0?"+":"")+Math.round(last.tsb)+'</span><span class="lbl">Forma (TSB)</span></div></div>';
-  const W=640,H=200,pl=36,pr=12,pt=12,pb=22;
-  const vals=rows.flatMap(r=>[r.ctl,r.atl,r.tsb,0]);
-  const mx=Math.max(10,Math.ceil(Math.max(...vals)/10)*10), mn=Math.min(0,Math.floor(Math.min(...vals)/10)*10);
-  const X=i=>pl+(n<=1?0:i/(n-1))*(W-pl-pr), Y=v=>pt+(mx-v)/((mx-mn)||1)*(H-pt-pb);
-  const path=key=>rows.map((r,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(r[key]).toFixed(1)).join(" ");
-  let g='';
-  for(let v=mn;v<=mx;v+=10){g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>'}
-  g+='<path d="'+path("tsb")+'" fill="none" stroke="var(--muted)" stroke-dasharray="4 3" stroke-width="1.5"/>';
-  g+='<path d="'+path("atl")+'" fill="none" stroke="var(--ember)" stroke-width="2"/>';
-  g+='<path d="'+path("ctl")+'" fill="none" stroke="var(--pine)" stroke-width="2.5"/>';
-  g+='<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+rows[0].k.slice(5)+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+last.k.slice(5)+'</text>';
-  h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Carga CTL ATL TSB">'+g+'</svg></div>';
-  h+='<p class="muted" style="margin:0;font-size:13px"><b style="color:var(--pine)">Verde</b> = forma crónica (lo que has construido). <b style="color:var(--ember)">Naranja</b> = fatiga reciente. <b>Discontinua</b> = forma (TSB): por debajo de −20 estás muy cargado; entre −10 y +5 estás listo para carga.</p></section>';
-  // volumen semanal
-  const W2=640,H2=190,pb2=24,pt2=16;
-  const wk=[]; for(let k=monday(START);parse(k)<=parse(today);k=addDays(k,7)){let pm=0,dm=0;for(let j=0;j<7;j++){const d=addDays(k,j);pm+=planFor(d).m||0;dm+=loadDay(d).min}wk.push({k,pm,dm})}
-  const sl=wk.slice(-10), mxw=Math.max(60,...sl.map(w=>Math.max(w.pm,w.dm)));
-  const bw=W2/Math.max(sl.length,1); let b='';
-  sl.forEach((w,i)=>{const x=i*bw+bw*.15, ww=bw*.7, hp=(H2-pb2-pt2)*w.pm/mxw, hd=(H2-pb2-pt2)*w.dm/mxw;
-    b+='<rect x="'+x+'" y="'+(H2-pb2-hp)+'" width="'+ww+'" height="'+hp+'" fill="none" stroke="var(--muted)" stroke-dasharray="3 2"/>';
-    b+='<rect x="'+(x+ww*.2)+'" y="'+(H2-pb2-hd)+'" width="'+(ww*.6)+'" height="'+hd+'" fill="var(--pine)" rx="2"/>';
-    b+='<text x="'+(x+ww/2)+'" y="'+(H2-pb2-Math.max(hp,hd)-4)+'" text-anchor="middle" font-size="10" fill="var(--fg)" font-family="var(--mono)">'+Math.round(w.dm)+'</text>';
-    b+='<text x="'+(x+ww/2)+'" y="'+(H2-6)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--mono)">'+w.k.slice(8)+'/'+w.k.slice(5,7)+'</text>'});
-  h+='<section class="card"><span class="lbl">Volumen semanal · hecho (relleno) vs. planificado (contorno), minutos</span><div class="chart"><svg viewBox="0 0 '+W2+' '+H2+'" width="100%" style="min-width:320px" role="img" aria-label="Volumen semanal">'+b+'</svg></div></section>';
-  // FTP
-  const adv=ftpAdvice();
-  h+='<section class="card"><span class="lbl">¿Subir el FTP?</span><div class="stats"><div class="stat"><span class="num">'+settings.ftp+' W</span><span class="lbl">FTP actual</span></div><div class="stat"><span class="num">'+(adv.est?adv.est+' W':'–')+'</span><span class="lbl">Estimado (95% del mejor 20\' de 42 d)</span></div></div><p class="muted">'+esc(adv.msg)+'</p>';
-  h+='<p class="muted" style="font-size:12px;margin:8px 0 0">Lo analizo yo con tus entrenos de intervals.icu y te propongo cada cambio. Un FTP solo sube si el dato se repite, no por un día bueno.</p></section>';
-  return h;
-}
 
 function MEAL_ICON(n){const k=n.toLowerCase();return k.startsWith("desayuno")?"🍳":k.startsWith("media")?"🍎":k.startsWith("comida")?"🥗":k.startsWith("merienda")?"🥛":k.startsWith("pre")?"🍌":k.startsWith("durante")?"💧":k.startsWith("recuper")?"🥤":k.startsWith("cena")?"🐟":k.startsWith("antes")?"🌙":"🍽️"}
 function macroBar(t){const kc=(t.c*4+t.pr*4+t.fa*9)||1;const a=t.c*4/kc*100,b=t.pr*4/kc*100,c=t.fa*9/kc*100;
@@ -735,7 +665,6 @@ function fmtDur(s){s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%
 function actFrom(a){return {id:a.id,name:a.name||"Salida",start:a.start_date_local||"",type:a.type,mov:a.moving_time||a.elapsed_time||0,dist:a.distance||0,spd:(a.average_speed||0)*3.6,maxspd:(a.max_speed||0)*3.6,hr:a.average_heartrate||null,maxhr:a.max_heartrate||null,cad:a.average_cadence||null,w:a.icu_average_watts||a.average_watts||null,np:a.icu_weighted_avg_watts||null,load:a.icu_training_load??null,IF:a.icu_intensity||null,ef:a.icu_efficiency_factor||null,vi:a.icu_variability_index||null,kcal:a.calories||null,kj:a.icu_joules?Math.round(a.icu_joules/1000):null,elev:a.total_elevation_gain||0,ftp:a.icu_ftp||null,zones:(a.icu_zone_times||[]).filter(z=>/^Z\d$/.test(z.id)).map(z=>z.secs||0),hrz:a.icu_hr_zone_times||[]}}
 function best(arr,win){if(arr.length<win)return 0;let s=0,m=0;for(let i=0;i<arr.length;i++){s+=(arr[i]||0);if(i>=win)s-=(arr[i-win]||0);if(i>=win-1&&s>m)m=s}return m/win}
 function allActs(){const out=[];Object.values(logs).forEach(L=>{((L&&L.acts)||[]).forEach(a=>out.push(Object.assign({day:L.date},a)))});return out.sort((x,y)=>x.start<y.start?-1:1)}
-function addP20(k,w){if(!(w>0))return;const arr=(settings.p20||[]).slice();const ex=arr.find(e=>e.date===k);if(ex)ex.w=Math.max(ex.w,Math.round(w));else arr.push({date:k,w:Math.round(w)});settings.p20=arr;saveSettings()}
 
 function zoneBar(t,arr,cols){const tot=(arr||[]).reduce((s,x)=>s+(x||0),0);if(!tot)return "";
   return '<div><span class="lbl">'+t+'</span><div class="mbar">'+arr.map((x,i)=>x?'<span style="width:'+(x/tot*100).toFixed(2)+'%;background:'+cols[i]+'"></span>':'').join("")+'</div><div class="mleg">'+arr.map((x,i)=>x>=30?'<span><i style="background:'+cols[i]+'"></i>'+ZN[i]+' '+Math.round(x/60)+"'</span>":'').join("")+'</div></div>'}
@@ -757,7 +686,7 @@ function compareHTML(k,a){
 function actCardsHTML(k){
   const acts=getLog(k).acts||[]; if(!acts.length) return "";
   return acts.map((a,i)=>{
-    const tiles=[["Duración",fmtDur(a.mov),""],["Distancia",(a.dist/1000).toFixed(1),"km"],["Vel. media",a.spd.toFixed(1),"km/h"],["Vel. máx",a.maxspd.toFixed(1),"km/h"],["Potencia media",a.w?Math.round(a.w):"–","W"],["Normalizada",a.np?Math.round(a.np):"–","W"],["FC media",a.hr?Math.round(a.hr):"–","ppm"],["FC máx",a.maxhr?Math.round(a.maxhr):"–","ppm"],["Cadencia",a.cad?Math.round(a.cad):"–","rpm"],["Carga",a.load??"–",""],["Intensidad",a.IF?Math.round(a.IF)+"%":"–",""],["Calorías",a.kcal??"–","kcal"],["Trabajo",a.kj??"–","kJ"],["Desnivel",Math.round(a.elev||0),"m"],["Vatios/pulso",a.ef?a.ef.toFixed(2):"–",""],["Mejor 20'",a.p20?Math.round(a.p20):"–","W"]];
+    const tiles=[["Duración",fmtDur(a.mov),""],["Distancia",(a.dist/1000).toFixed(1),"km"],["Vel. media",a.spd.toFixed(1),"km/h"],["Vel. máx",a.maxspd.toFixed(1),"km/h"],["Potencia media",a.w?Math.round(a.w):"–","W"],["Normalizada",a.np?Math.round(a.np):"–","W"],["FC media",a.hr?Math.round(a.hr):"–","ppm"],["FC máx",a.maxhr?Math.round(a.maxhr):"–","ppm"],["Cadencia",a.cad?Math.round(a.cad):"–","rpm"],["Carga",a.load??"–",""],["Intensidad",a.IF?Math.round(a.IF)+"%":"–",""],["Calorías",a.kcal??"–","kcal"],["Trabajo",a.kj??"–","kJ"],["Desnivel",Math.round(a.elev||0),"m"],["Vatios/pulso",a.ef?a.ef.toFixed(2):"–",""],["Mejor 20'",(a.pb&&a.pb[1200])?a.pb[1200]:"–","W"]];
     let h='<section class="card"><div class="row between"><span class="lbl">Tu entreno · datos reales de intervals.icu</span><span class="num muted" style="font-size:12px">'+esc(a.start.slice(11,16))+'</span></div><h3 style="margin:0">'+esc(a.name)+'</h3>';
     h+='<div class="tiles">'+tiles.map(t=>'<div class="tile"><span class="num">'+t[1]+(t[2]?'<small> '+t[2]+'</small>':'')+'</span><span class="lbl">'+t[0]+'</span></div>').join("")+'</div>';
     h+=zoneBar("Tiempo en zonas de potencia",a.zones,ZCOL);
@@ -796,7 +725,7 @@ function drawMap(id,lat,lng){
 }
 async function loadDetail(k,i){
   const a=(getLog(k).acts||[])[i], box=document.getElementById("ad"+i); if(!a||!box) return;
-  if(!IV.id||!IV.key){box.innerHTML='<p class="muted">Configura intervals.icu en la pestaña Semana para ver las gráficas.</p>';return}
+  if(!IV.id||!IV.key){box.innerHTML='<p class="muted">Configura intervals.icu en Semana → Avanzado para ver las gráficas.</p>';return}
   box.innerHTML='<p class="muted">Cargando tu entreno segundo a segundo…</p>';
   try{
     const [st,iv]=await Promise.all([ivGet("activity/"+a.id+"/streams?types=time,watts,heartrate,cadence,velocity_smooth,altitude,latlng"),ivGet("activity/"+a.id+"/intervals").catch(()=>null)]);
@@ -814,8 +743,8 @@ async function loadDetail(k,i){
     box.innerHTML=h||'<p class="muted">Esta actividad no tiene datos segundo a segundo.</p>';
     bindReadout(i,time,used);
     if(hasMap) drawMap("map"+i,ll.data,ll.data2);
-    if(a.p20==null&&S.watts&&a.mov>=1200){const p=best(S.watts.data||[],1200);const acts=(getLog(k).acts||[]).slice();acts[i]=Object.assign({},acts[i],{p20:p});setLog(k,{acts});addP20(k,p)}
-  }catch(e){box.innerHTML='<p class="muted">No se pudieron cargar las gráficas ('+esc(e.message)+'). Revisa la clave en Semana.</p>'}
+    if(!a.pb&&S.watts){const acts=(getLog(k).acts||[]).slice();acts[i]=Object.assign({},acts[i],{pb:bests(S.watts.data||[])});setLog(k,{acts});autoFTP()}
+  }catch(e){box.innerHTML='<p class="muted">No se pudieron cargar las gráficas ('+esc(e.message)+'). Revisa la clave en Semana → Avanzado.</p>'}
 }
 
 function historialHTML(){
@@ -836,7 +765,7 @@ function historialHTML(){
 }
 
 async function syncIV(auto){
-  if(!IV.id||!IV.key){ if(!auto){ syncNote="Añade tu ID y clave en Semana → intervals.icu."; render(); } return; }
+  if(!IV.id||!IV.key){ if(!auto){ syncNote="Añade tu ID y clave en Semana → Avanzado."; render(); } return; }
   syncNote="Sincronizando…"; if(!auto) render();
   try{
     const list=await ivGet("athlete/"+encodeURIComponent(IV.id)+"/activities?oldest="+addDays(todayKey(),-90)+"&newest="+addDays(todayKey(),1));
@@ -844,17 +773,18 @@ async function syncIV(auto){
     (list||[]).filter(a=>/ride/i.test(a.type||"")).forEach(a=>{const k=(a.start_date_local||"").slice(0,10);if(k)(byDay[k]=byDay[k]||[]).push(actFrom(a))});
     let n=0;
     Object.keys(byDay).forEach(k=>{const prev=getLog(k).acts||[];
-      const acts=byDay[k].sort((x,y)=>x.start<y.start?-1:1).map(a=>{const o=prev.find(p=>p.id===a.id);return (o&&o.p20!=null)?Object.assign(a,{p20:o.p20}):a});
-      setLog(k,{acts,done:true,min:Math.round(acts.reduce((s,a)=>s+a.mov,0)/60),np:acts[0].w?Math.round(acts[0].w):(getLog(k).np??null)}); n+=acts.length});
+      const acts=byDay[k].sort((x,y)=>x.start<y.start?-1:1).map(a=>{const o=prev.find(p=>p.id===a.id);return (o&&o.pb)?Object.assign(a,{pb:o.pb}):a});
+      setLog(k,{acts,done:true,min:Math.round(acts.reduce((s,a)=>s+a.mov,0)/60)}); n+=acts.length});
     // mejor potencia de 20' de cada salida, para el análisis automático del FTP
     let c=0;
     for(const k of Object.keys(byDay).sort().reverse()){
       const acts=(getLog(k).acts||[]).slice(); let ch=false;
-      for(let j=0;j<acts.length;j++){const a=acts[j]; if(a.p20!=null||a.mov<1200||!a.w||c>=8) continue;
-        try{const st=await ivGet("activity/"+a.id+"/streams?types=watts");const wv=((st||[]).find(s=>s.type==="watts")||{}).data||[];acts[j]=Object.assign({},a,{p20:best(wv,1200)});c++;ch=true;addP20(k,acts[j].p20)}catch(e){}
+      for(let j=0;j<acts.length;j++){const a=acts[j]; if(a.pb||!a.w||c>=12) continue;
+        try{const st=await ivGet("activity/"+a.id+"/streams?types=watts");const wv=((st||[]).find(s=>s.type==="watts")||{}).data||[];acts[j]=Object.assign({},a,{pb:bests(wv)});c++;ch=true}catch(e){}
       }
       if(ch) setLog(k,{acts});
     }
+    autoFTP();
     syncNote="Sincronizado: "+n+" salidas · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
   }catch(e){ syncNote=(e.message==="http 401"||e.message==="http 403")?"Clave o ID incorrectos.":"No se pudo sincronizar. Revisa la conexión."; }
   render();
@@ -877,6 +807,158 @@ function renderDieta(){
   document.getElementById("prev").onclick=()=>{cur=addDays(cur,-1);render()};
   document.getElementById("next").onclick=()=>{cur=addDays(cur,1);render()};
   $view.querySelectorAll("[data-meal]").forEach(cb=>cb.addEventListener("change",()=>{const arr=(getLog(cur).meals||[]).slice();arr[+cb.dataset.meal]=cb.checked;setLog(cur,{meals:arr})}));
+}
+
+// ---------- Progreso: análisis de ciclismo ----------
+const PBW=[[5,"5 s"],[30,"30 s"],[60,"1 min"],[300,"5 min"],[1200,"20 min"],[3600,"1 h"],[7200,"2 h"]];
+function bests(w){const o={};PBW.forEach(([s])=>{const b=best(w,s);if(b>0)o[s]=Math.round(b)});return o}
+function fmtDay(k){return k.slice(8)+"/"+k.slice(5,7)}
+function curKg(){
+  const t=todayKey(), xs=Object.values(logs).filter(l=>l&&typeof l.peso==="number"&&l.date<=t).sort((a,b)=>a.date<b.date?-1:1);
+  const rec=xs.filter(l=>diffDays(l.date,t)<14);
+  if(rec.length) return rec.reduce((s,l)=>s+l.peso,0)/rec.length;
+  return xs.length?xs[xs.length-1].peso:settings.peso;
+}
+function isIndoor(a){return a.type==="VirtualRide"||/rodillo|zwift|indoor|trainer|virtual/i.test(a.name||"")||(planFor(a.day).place==="Rodillo"&&(a.elev||0)<30)}
+function autoFTP(){
+  const t=todayKey(), hist=settings.ftpHist||[];
+  const acts=allActs().filter(a=>a.pb&&diffDays(a.day,t)>=0&&diffDays(a.day,t)<=42);
+  let cand=null, why="", src="auto";
+  const tests=acts.filter(a=>a.pb[60]&&(/rampa|ramp/i.test(a.name||"")||/rampa/i.test(planFor(a.day).t)));
+  const lastTest=tests[tests.length-1];
+  if(lastTest&&!hist.some(h=>h.src===lastTest.id)){cand=Math.round(lastTest.pb[60]*0.75);why="test de rampa del "+fmtDay(lastTest.day)+" (75 % de tu mejor minuto: "+lastTest.pb[60]+" W)";src=lastTest.id}
+  else{
+    const est=acts.filter(a=>a.pb[1200]).map(a=>Math.max(a.pb[1200]*0.95,a.pb[3600]||0)).sort((x,y)=>y-x);
+    if(est.length>=2&&est[1]>=settings.ftp+3){cand=Math.round(est[1]);why="dos salidas de las últimas 6 semanas por encima de tu FTP"}
+  }
+  if(cand!=null&&cand!==settings.ftp&&cand>80){
+    const old=settings.ftp; settings.ftp=cand; settings.ftpExample=false;
+    settings.ftpHist=hist.concat([{date:t,ftp:cand,src}]);
+    settings.ftpNote={date:t,old,ftp:cand,why,seen:false}; saveSettings();
+  }
+}
+function ftpBanner(){const n=settings.ftpNote;if(!n||n.seen)return "";
+  return '<section class="card ftpnote"><div class="row between"><span class="lbl" style="color:#fff">Nuevo FTP</span><button class="btn" id="ftpOk">Entendido</button></div><div class="big num">'+n.old+' → '+n.ftp+'<small> W</small></div><p style="margin:0;font-size:14px">Calculado con tu '+esc(n.why)+'. Tus zonas y vatios de la app ya están actualizados. Avísame para cambiarlo también en intervals.icu y que el rodillo y el Garmin usen los vatios nuevos.</p></section>'}
+function bindFtpBanner(){const b=document.getElementById("ftpOk");if(b)b.onclick=()=>{settings.ftpNote=Object.assign({},settings.ftpNote,{seen:true});saveSettings();render()}}
+function kpi(v,u,l,d){return '<div class="kpi"><span class="num">'+v+(u?'<small> '+u+'</small>':'')+'</span><span class="lbl">'+l+'</span>'+(d||'')+'</div>'}
+function deltaTag(a,b,dec){const x=a-b;if(Math.abs(x)<(dec?0.05:0.5))return '<span class="dl">igual</span>';return '<span class="dl '+(x>0?'up':'down')+'">'+(x>0?'▲ ':'▼ ')+(dec?Math.abs(x).toFixed(1):Math.round(Math.abs(x)))+'</span>'}
+function barsSVG(vals,labels,color,unit,dec){
+  const W=640,H=150,pl=8,pr=8,pt=20,pb=22,n=vals.length,mx=Math.max(...vals,dec?1:10),bw=(W-pl-pr)/n;
+  let g='';
+  vals.forEach((v,i)=>{const h=(H-pt-pb)*v/mx,x=pl+i*bw+bw*.18,w=bw*.64;
+    g+='<rect x="'+x.toFixed(1)+'" y="'+(H-pb-h).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.max(h,v>0?2:0).toFixed(1)+'" rx="4" fill="'+color+'" opacity="'+(i===n-1?1:.75)+'"/>';
+    if(v>0) g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-pb-h-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fg)" font-family="var(--mono)">'+(dec?v.toFixed(1):Math.round(v))+'</text>';
+    g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--mono)">'+labels[i]+'</text>'});
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block" role="img" aria-label="'+unit+' por semana">'+g+'</svg>';
+}
+function weeksBack(n){const m=monday(todayKey()),out=[];for(let i=n-1;i>=0;i--)out.push(addDays(m,-7*i));return out}
+function volumeHTML(acts){
+  if(!acts.length) return "";
+  const wks=weeksBack(12), lab=wks.map(fmtDay);
+  const agg=f=>wks.map(w=>{const e=addDays(w,6);return acts.filter(a=>a.day>=w&&a.day<=e).reduce((s,a)=>s+f(a),0)});
+  const hrs=agg(a=>a.mov/3600), km=agg(a=>a.dist/1000), el=agg(a=>a.elev||0);
+  const tot=f=>acts.reduce((s,a)=>s+f(a),0);
+  let h='<section class="card"><span class="lbl">Volumen · últimas 12 semanas</span>';
+  h+='<div class="kpis">'+kpi(tot(a=>a.mov/3600).toFixed(0),"h","Horas totales")+kpi(Math.round(tot(a=>a.dist/1000)),"km","Km totales")+kpi(Math.round(tot(a=>a.elev||0)).toLocaleString("es-ES"),"m","Desnivel total")+'</div>';
+  h+='<div class="sub">Horas por semana</div>'+barsSVG(hrs,lab,"var(--pine)","horas",true);
+  h+='<div class="sub">Kilómetros por semana</div>'+barsSVG(km,lab,"var(--z2)","km");
+  h+='<div class="sub">Desnivel por semana (m)</div>'+barsSVG(el,lab,"var(--ember)","desnivel");
+  return h+'<p class="muted" style="font-size:13px;margin:0">Totales de todas las salidas sincronizadas (últimos 90 días). La barra más intensa es la semana actual.</p></section>';
+}
+function powerCurveHTML(acts,kg){
+  const withPb=acts.filter(a=>a.pb);
+  let h='<section class="card"><span class="lbl">Récords de potencia</span>';
+  if(!withPb.length) return h+'<p class="muted" style="margin:0">Aparecerán al sincronizar salidas con potencia.</p></section>';
+  const t=todayKey(), recent=withPb.filter(a=>diffDays(a.day,t)<=42);
+  const bestOf=(xs,s)=>{let w=0,d=null;xs.forEach(a=>{if((a.pb[s]||0)>w){w=a.pb[s];d=a.day}});return {w,d}};
+  const rows=PBW.map(([s,l])=>({s,l,sea:bestOf(withPb,s),rec:bestOf(recent,s)}));
+  const W=640,H=210,pl=42,pr=14,pt=14,pb=26,x0=Math.log(5),x1=Math.log(7200);
+  const vals=rows.flatMap(r=>[r.sea.w,r.rec.w]).filter(v=>v>0), mx=Math.ceil(Math.max(...vals)/100)*100;
+  const X=s=>pl+(Math.log(s)-x0)/(x1-x0)*(W-pl-pr), Y=v=>pt+(mx-v)/mx*(H-pt-pb);
+  const path=k=>rows.filter(r=>r[k].w>0).map((r,i)=>(i?"L":"M")+X(r.s).toFixed(1)+" "+Y(r[k].w).toFixed(1)).join(" ");
+  let g='';
+  for(let v=0;v<=mx;v+=mx/4) g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+Math.round(v)+'</text>';
+  rows.forEach(r=>{g+='<text x="'+X(r.s).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--mono)">'+r.l+'</text>'});
+  g+='<path d="'+path("sea")+'" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>';
+  g+='<path d="'+path("rec")+'" fill="none" stroke="var(--ember)" stroke-width="3"/>'+rows.filter(r=>r.rec.w>0).map(r=>'<circle cx="'+X(r.s).toFixed(1)+'" cy="'+Y(r.rec.w).toFixed(1)+'" r="4" fill="var(--ember)"/>').join("");
+  h+='<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Curva de potencia">'+g+'</svg></div>';
+  h+='<div class="mleg"><span><i style="background:var(--ember)"></i>Últimas 6 semanas</span><span><i style="background:var(--muted)"></i>Mejor de la temporada</span></div>';
+  h+='<div class="chart"><table class="cmp"><thead><tr><th>Duración</th><th>6 semanas</th><th>W/kg</th><th>Temporada</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.l+'</td><td><b>'+(r.rec.w||"–")+'</b>'+(r.rec.w?' W':'')+'</td><td>'+(r.rec.w?(r.rec.w/kg).toFixed(2):"–")+'</td><td>'+(r.sea.w?r.sea.w+' W <span class="muted">'+fmtDay(r.sea.d)+'</span>':"–")+'</td></tr>').join("")+'</tbody></table></div>';
+  return h+'<p class="muted" style="font-size:13px;margin:0">5–30 s: sprint y arrancadas. 1–5 min: rampas y repechos. 20 min–1 h: tu umbral, la base del FTP. 2 h: resistencia para la Urbión y la QH.</p></section>';
+}
+function powerEvoHTML(acts){
+  const xs=acts.filter(a=>a.w||a.np); if(xs.length<2) return "";
+  const W=640,H=200,pl=40,pr=14,pt=14,pb=24;
+  const vs=xs.flatMap(a=>[a.w||0,a.np||0]).filter(v=>v>0), mn=Math.floor(Math.min(...vs)/20)*20-10, mx=Math.ceil(Math.max(...vs)/20)*20+10;
+  const t0=parse(xs[0].day).getTime(), t1=parse(xs[xs.length-1].day).getTime()||t0+1;
+  const X=k=>pl+(parse(k).getTime()-t0)/((t1-t0)||1)*(W-pl-pr), Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+  let g='';
+  for(let v=mn;v<=mx;v+=(mx-mn)/4) g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+Math.round(v)+'</text>';
+  const ind=xs.filter(isIndoor), out=xs.filter(a=>!isIndoor(a));
+  const line=(arr,k,c)=>arr.length>1?'<path d="'+arr.filter(a=>a[k]).map((a,i)=>(i?"L":"M")+X(a.day).toFixed(1)+" "+Y(a[k]).toFixed(1)).join(" ")+'" fill="none" stroke="'+c+'" stroke-width="2"/>':'';
+  g+=line(ind,"np","var(--z2)")+line(out,"np","var(--ember)");
+  xs.forEach(a=>{const c=isIndoor(a)?"var(--z2)":"var(--ember)";if(a.np)g+='<circle cx="'+X(a.day).toFixed(1)+'" cy="'+Y(a.np).toFixed(1)+'" r="4.5" fill="'+c+'"/>';if(a.w)g+='<circle cx="'+X(a.day).toFixed(1)+'" cy="'+Y(a.w).toFixed(1)+'" r="3" fill="none" stroke="'+c+'" stroke-width="1.5"/>'});
+  g+='<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+fmtDay(xs[0].day)+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+fmtDay(xs[xs.length-1].day)+'</text>';
+  return '<section class="card"><span class="lbl">Evolución de la potencia por salida</span><div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Evolución de la potencia">'+g+'</svg></div><div class="mleg"><span><i style="background:var(--z2)"></i>Rodillo</span><span><i style="background:var(--ember)"></i>Exterior</span><span>● normalizada · ○ media</span></div><p class="muted" style="font-size:13px;margin:0">Compara rodillos con rodillos y salidas con salidas: el terreno cambia mucho la potencia media.</p></section>';
+}
+function zonesWeeklyHTML(acts){
+  const wks=weeksBack(8);
+  const data=wks.map(w=>{const e=addDays(w,6),z=[0,0,0,0,0,0,0];acts.filter(a=>a.day>=w&&a.day<=e).forEach(a=>(a.zones||[]).forEach((s,i)=>{if(i<7)z[i]+=s||0}));return z});
+  const tots=data.map(z=>z.reduce((s,v)=>s+v,0)); if(!tots.some(v=>v)) return "";
+  const W=640,H=170,pl=8,pr=8,pt=18,pb=22,mx=Math.max(...tots),bw=(W-pl-pr)/wks.length; let g='';
+  data.forEach((z,i)=>{let y=H-pb;const x=pl+i*bw+bw*.2,w=bw*.6;z.forEach((s,j)=>{if(!s)return;const h=(H-pt-pb)*s/mx;y-=h;g+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+ZCOL[j]+'"/>'});
+    if(tots[i])g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fg)" font-family="var(--mono)">'+(tots[i]/3600).toFixed(1)+'h</text>';
+    g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--mono)">'+fmtDay(wks[i])+'</text>'});
+  const all=data.reduce((s,z)=>s.map((v,i)=>v+z[i]),[0,0,0,0,0,0,0]), T=all.reduce((s,v)=>s+v,0)||1, low=(all[0]+all[1])/T*100;
+  return '<section class="card"><span class="lbl">Tiempo en zonas de potencia por semana</span><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block" role="img" aria-label="Zonas por semana">'+g+'</svg><div class="mleg">'+ZN.map((n,i)=>'<span><i style="background:'+ZCOL[i]+'"></i>'+n+'</span>').join("")+'</div><p class="muted" style="font-size:13px;margin:0">En estas 8 semanas, el <b style="color:var(--fg)">'+Math.round(low)+' %</b> del tiempo ha sido en Z1–Z2. En la fase de base conviene que sea alrededor del 75–80 %.</p></section>';
+}
+function pmcHTML(){
+  const t=todayKey(); if(parse(t)<parse(START)) return "";
+  const rows=pmc(START,t), last=rows[rows.length-1], n=rows.length;
+  const W=640,H=190,pl=36,pr=12,pt=12,pb=22, vals=rows.flatMap(r=>[r.ctl,r.atl,r.tsb,0]);
+  const mx=Math.max(10,Math.ceil(Math.max(...vals)/10)*10), mn=Math.min(0,Math.floor(Math.min(...vals)/10)*10);
+  const X=i=>pl+(n<=1?0:i/(n-1))*(W-pl-pr), Y=v=>pt+(mx-v)/((mx-mn)||1)*(H-pt-pb);
+  const path=k=>rows.map((r,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(r[k]).toFixed(1)).join(" ");
+  let g=''; for(let v=mn;v<=mx;v+=10) g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>';
+  g+='<path d="'+path("tsb")+'" fill="none" stroke="var(--muted)" stroke-dasharray="4 3" stroke-width="1.5"/><path d="'+path("atl")+'" fill="none" stroke="var(--ember)" stroke-width="2"/><path d="'+path("ctl")+'" fill="none" stroke="var(--pine)" stroke-width="2.5"/>';
+  return '<section class="card"><span class="lbl">Forma, fatiga y frescura</span><div class="kpis">'+kpi(Math.round(last.ctl),"","Forma (CTL)")+kpi(Math.round(last.atl),"","Fatiga (ATL)")+kpi((last.tsb>0?"+":"")+Math.round(last.tsb),"","Frescura (TSB)")+'</div><div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Forma y fatiga">'+g+'</svg></div><div class="mleg"><span><i style="background:var(--pine)"></i>Forma</span><span><i style="background:var(--ember)"></i>Fatiga</span><span><i style="background:var(--muted)"></i>Frescura</span></div><p class="muted" style="font-size:13px;margin:0">La forma sube despacio con semanas constantes. Frescura por debajo de −20: mucha carga, toca descanso. Entre −10 y +5: buen punto para entrenar.</p></section>';
+}
+function weightHTML(all){
+  const pts=all.filter(l=>typeof l.peso==="number").slice(-90);
+  if(pts.length<2) return '<section class="card"><span class="lbl">Peso</span><p class="muted" style="margin:0">Apunta tu peso en ayunas en la pestaña Día: con dos registros aparece la gráfica.</p></section>';
+  const W=640,H=180,pl=40,pr=14,pt=14,pb=24, ys=pts.map(p=>p.peso), mn=Math.floor(Math.min(...ys)-0.5), mx=Math.ceil(Math.max(...ys)+0.5);
+  const t0=parse(pts[0].date).getTime(), t1=parse(pts[pts.length-1].date).getTime();
+  const X=d=>pl+(parse(d).getTime()-t0)/((t1-t0)||1)*(W-pl-pr), Y=v=>pt+(mx-v)/((mx-mn)||1)*(H-pt-pb);
+  let g=''; for(let v=mn;v<=mx;v++) g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+v+'</text>';
+  const line=pts.map((p,i)=>(i?"L":"M")+X(p.date).toFixed(1)+" "+Y(p.peso).toFixed(1)).join(" ");
+  g+='<path d="'+line+' L'+X(pts[pts.length-1].date).toFixed(1)+' '+(H-pb)+' L'+X(pts[0].date).toFixed(1)+' '+(H-pb)+' Z" fill="var(--pine)" opacity=".1"/><path d="'+line+'" fill="none" stroke="var(--pine)" stroke-width="2.5"/>';
+  const ch=(pts[pts.length-1].peso-pts[0].peso);
+  return '<section class="card"><span class="lbl">Peso</span><div class="kpis">'+kpi(pts[pts.length-1].peso.toFixed(1),"kg","Último")+kpi(curKg().toFixed(1),"kg","Media 14 días")+kpi((ch>0?"+":"")+ch.toFixed(1),"kg","Desde "+fmtDay(pts[0].date))+'</div><div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:320px" role="img" aria-label="Peso">'+g+'</svg></div><p class="muted" style="font-size:13px;margin:0">Mira la tendencia, no el día a día: el agua y el glucógeno mueven ±1 kg. Objetivo: 0,3–0,4 kg menos por semana.</p></section>';
+}
+function ftpHistHTML(){
+  const hs=(settings.ftpHist||[]); if(hs.length<2) return "";
+  return '<div class="ftphist">'+hs.slice(-6).map(h=>'<span><b class="num">'+h.ftp+'</b> W <span class="muted">'+fmtDay(h.date)+'</span></span>').join('<span class="muted">→</span>')+'</div>';
+}
+function renderProgreso(){
+  const t=todayKey(), acts=allActs(), all=Object.values(logs).filter(l=>l&&l.date).sort((a,b)=>a.date<b.date?-1:1), kg=curKg();
+  const sumW=w=>{const e=addDays(w,6),xs=acts.filter(a=>a.day>=w&&a.day<=e);return {h:xs.reduce((s,a)=>s+a.mov,0)/3600,km:xs.reduce((s,a)=>s+a.dist,0)/1000,el:xs.reduce((s,a)=>s+(a.elev||0),0),tss:xs.reduce((s,a)=>s+(a.load||0),0)}};
+  const cw=sumW(monday(t)), pw=sumW(addDays(monday(t),-7));
+  let h='<div style="display:flex;flex-direction:column;gap:16px">';
+  h+=ftpBanner();
+  h+='<section class="card"><span class="lbl">Esta semana · frente a la anterior</span><div class="kpis k4">'+kpi(cw.h.toFixed(1),"h","Horas",deltaTag(cw.h,pw.h,true))+kpi(Math.round(cw.km),"km","Distancia",deltaTag(cw.km,pw.km))+kpi(Math.round(cw.el),"m","Desnivel",deltaTag(cw.el,pw.el))+kpi(Math.round(cw.tss),"","Carga",deltaTag(cw.tss,pw.tss))+'</div></section>';
+  h+='<section class="card"><span class="lbl">Tu motor</span><div class="kpis">'+kpi(settings.ftp,"W","FTP · automático")+kpi((settings.ftp/kg).toFixed(2),"W/kg","FTP por kilo")+kpi(kg.toFixed(1),"kg","Peso · media 14 d")+'</div>'+ftpHistHTML()+'<p class="muted" style="font-size:13px;margin:0">El FTP se ajusta solo: con cada test de rampa (75 % de tu mejor minuto) o cuando dos salidas de las últimas 6 semanas lo superan (95 % de tu mejor 20 minutos). Los W/kg son la clave para subir puertos en la Urbión y la QH.</p></section>';
+  h+=powerCurveHTML(acts,kg);
+  h+=volumeHTML(acts);
+  h+=powerEvoHTML(acts);
+  h+=zonesWeeklyHTML(acts);
+  h+=pmcHTML();
+  h+=historialHTML();
+  h+=weightHTML(all);
+  if(!acts.length) h+='<section class="card"><p class="muted" style="margin:0">Configura intervals.icu en Semana → Avanzado y pulsa Sincronizar en la pestaña Día: aquí aparecerá el análisis de todas tus salidas.</p></section>';
+  h+='</div>';
+  $view.innerHTML=h;
+  $view.querySelectorAll(".hrow").forEach(b=>b.onclick=()=>{cur=b.dataset.k;setView("hoy")});
+  bindFtpBanner();
 }
 
 function render(){
