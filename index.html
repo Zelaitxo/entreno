@@ -429,7 +429,13 @@ const OV = {
   "2026-11-03":{kind:"rest",t:"Sin entrenar",m:0,z:"Z1",zones:[],d:"Hoy no ha habido entreno. No se recupera: la semana se reorganiza a partir de mañana."},
   "2026-11-04":{key:"pre.tue",f:1,kind:"ride",t:"Rodillo Z2 suave",m:45,z:"Z2",zones:["Z2"],d:"45' en Z2 para recordar sensaciones y soltar piernas antes del test. Nada de apretar.",place:"Rodillo"},
   "2026-11-05":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"10' suave. Rampa: empieza a 100 W y sube 20 W cada minuto hasta no poder más. La app calcula tu FTP sola al sincronizar (75 % de tu mejor minuto).",place:"Rodillo"},
-  "2026-11-06":{kind:"str",t:"Fuerza · primera toma de contacto",m:30,z:"str",zones:[],d:"Circuito de adaptación con 2 series y pesos muy ligeros. Va después del test y no antes, para que las agujetas no estropeen la medición.",place:"Gimnasio en casa"}
+  "2026-11-06":{kind:"str",t:"Fuerza · primera toma de contacto",m:30,z:"str",zones:[],d:"Circuito de adaptación con 2 series y pesos muy ligeros. Va después del test y no antes, para que las agujetas no estropeen la medición.",place:"Gimnasio en casa"},
+  "2026-11-11":{key:"pre.tue",f:1,kind:"ride",t:"Rodillo Z2 suave · vuelta tras enfermedad",m:45,z:"Z2",zones:["Z2"],d:"Primer día en bici tras estar enfermo. Todo en Z2 y pulso tranquilo. Si notas el pulso más alto de lo normal o te encuentras flojo, corta a los 30'.",place:"Rodillo",tag:"Vuelta tras enfermedad"},
+  "2026-11-12":{kind:"str",t:"Fuerza · Adaptación",m:30,z:"str",zones:[],d:"La sesión de adaptación con 2 series y peso ligero. Se mueve al jueves para que el miércoles vuelvas a la bici sin agujetas.",place:"Gimnasio en casa",tag:"Vuelta tras enfermedad"},
+  "2026-11-13":{key:"pre.tue",f:1,kind:"ride",t:"Exterior suave",m:40,z:"Z2",zones:["Z2"],d:"40' muy suaves. Si prefieres, cámbialo por un rodaje a pie tranquilo de 30'.",place:"Exterior",tag:"Vuelta tras enfermedad"},
+  "2026-11-14":{key:"pre.tue",f:1,kind:"ride",t:"MTB Z2",m:75,z:"Z2",zones:["Z2"],d:"Salida tranquila en Z2, sin buscar las subidas duras. Come algo a la hora.",place:"Exterior",tag:"Vuelta tras enfermedad"},
+  "2026-11-15":{key:"pre.tue",f:1,kind:"ride",t:"Carretera Z2",m:60,z:"Z2",zones:["Z2"],d:"Rodaje suave en llano o terreno ondulado.",place:"Exterior",tag:"Vuelta tras enfermedad"},
+  "2026-11-17":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"Repetición del test. En modo ERG el rodillo pone los vatios: tú solo mantén 85–95 rpm y aguanta hasta que no puedas más. No mires la zona verde del Garmin. La app calcula el FTP sola al sincronizar.",place:"Rodillo",tag:"Test"}
 };
 function planFor(k){
   if(OV[k]) return Object.assign({tag:"Semana de inicio"},OV[k]);
@@ -970,8 +976,8 @@ function renderProgreso(){
 // cantidades [suave, medio, largo]; 0 = ese día no se toma
 const LVI={bajo:0,medio:1,alto:2};
 const DES={
-  A:{n:"Tostadas con huevo",items:[["Pan integral o de centeno",[60,90,120],"g"],["Huevos",[2,2,3],"ud"],["Claras de huevo",[100,100,100],"g"],["Tomate rallado y AOVE","1 cucharadita"],["Kiwi o naranja",[1,1,1],"ud"],["Café o té",""]],tip:"Los días de descanso o fuerza: más proteína y menos hidratos."},
-  B:{n:"Avena con skyr y plátano",tag:"Nuevo",items:[["Copos de avena",[40,70,100],"g"],["Skyr o yogur griego natural",[250,250,250],"g"],["Plátano",[1,1,1],"ud"],["Nueces",[10,10,15],"g"],["Canela al gusto",""],["Café o té",""]],tip:"Prepárala la noche antes en un tarro: por la mañana solo hay que cogerla. Si un día vas con prisa, esta es la opción."}
+  A:{n:"Tostadas con huevo",items:[["Pan integral o de centeno",[60,90,120],"g"],["Huevos",[2,2,3],"ud"],["Claras de huevo",[100,100,100],"g"],["Tomate rallado y AOVE","1 cucharadita"],["Kiwi o naranja",[1,1,1],"ud"],["Café o té",""]],tip:"Para sábado y domingo, antes de las salidas largas: con más tiempo para prepararlo."},
+  B:{n:"Yogur de soja con avena y fruta",tag:"Tu elección",items:[["Yogur de soja Alpro (limón u otro sabor)",[2,2,2],"ud"],["Copos de avena",[40,60,80],"g"],["Kiwi (o fresas, plátano, manzana…)",[1,1,2],"ud"],["Nueces o almendras",[15,15,15],"g"],["Café con leche o bebida de soja",""]],tip:"Para lunes a viernes. El yogur de soja tiene poca proteína (unos 4 g cada uno): por eso van dos, con nueces y café con leche. Cambia de sabor y de fruta cuando quieras."}
 };
 const MM={n:"Skyr, fruta y nueces",items:[["Yogur proteico o skyr",[1,1,1],"ud (150 g)"],["Manzana u otra fruta",[1,1,1],"ud"],["Nueces o almendras",[15,15,15],"g"],["Mini bocadillo integral con pavo",[0,40,60],"g de pan"]],tip:"Siempre lo mismo. Así llegas a la comida sin hambre y no picas."};
 const MER={n:"Sándwich de pavo y queso",items:[["Pan integral de molde",[2,2,3],"rebanadas"],["Pavo en lonchas",[60,60,80],"g"],["Queso fresco o light",[1,1,1],"loncha"],["Plátano (si entrenas)",[0,1,1],"ud"]],tip:"Tu merienda de siempre, a una hora fija y antes del rodillo. Con ella llegas con energía y sin ganas de picar."};
@@ -991,10 +997,13 @@ const WEEK=[
  {comida:{n:"Pollo al horno con patatas",tag:"Provisional",items:[["Pollo sin piel",[180,180,200],"g"],["Patata al horno",[150,250,350],"g"],["Pimiento y cebolla al horno",""],["Postre: fruta",""]]},
   cena:{n:"Pizza casera de verduras, pavo y queso",tag:"De casa",items:[["Pizza casera",["1/3","1/2","1/2"],"de pizza"],["Ensalada grande",""],["Postre: fruta",""]],tip:"Mitad de harina integral en la masa, mucha verdura y mozzarella ligera: sigue siendo pizza y sacia más."}}
 ];
+const MEAL_OV={
+ "2026-11-11":{comida:{n:"Muslos de pollo con patatas al horno",tag:"De casa",items:[["Muslos de pollo, sin piel",[2,2,2],"ud"],["Patata al horno",[200,250,350],"g"],["Pimiento y cebolla al horno",""],["Ensalada verde",""],["Postre: fruta",""]],tip:"Quita la piel antes de hornear: mismo sabor y bastante menos grasa. Buena comida para volver a la bici por la tarde."}}
+};
 const COMPRA=[
- ["Fruta y verdura",["Plátanos (7)","Manzanas (7)","Kiwis o naranjas (7)","Limones","Patatas (3 kg)","Lechuga o mezcla de ensalada","Tomates","Cebollas","Zanahorias","Pimientos","Puerro","Brócoli","Espinacas frescas","Judías verdes","Ajos"]],
+ ["Fruta y verdura",["Plátanos (7)","Manzanas (7)","Kiwis (7) y otra fruta para variar","Limones","Patatas (3 kg)","Lechuga o mezcla de ensalada","Tomates","Cebollas","Zanahorias","Pimientos","Puerro","Brócoli","Espinacas frescas","Judías verdes","Ajos"]],
  ["Carne y pescado",["Pechuga de pollo o pavo (500 g)","Pavo en lonchas (400 g)","Zancarrón (1 pieza)","Carne picada de pavo o ternera magra (300 g)","Lomo de cerdo (300 g)","Salmón (2 lomos)","Merluza o bacalao (400 g)","Pollo para el domingo"]],
- ["Huevos y lácteos",["Huevos (2 docenas)","Claras de huevo (1 brick)","Skyr o yogur griego natural (1,5 kg)","Yogures proteicos (7)","Yogures naturales (7)","Queso fresco o light en lonchas","Mozzarella ligera y queso rallado","Kéfir o leche (1 l)"]],
+ ["Huevos y lácteos",["Huevos (2 docenas)","Claras de huevo (1 brick)","Yogures de soja Alpro (10)","Skyr o yogur griego natural (500 g)","Yogures proteicos (7)","Yogures naturales (7)","Queso fresco o light en lonchas","Mozzarella ligera y queso rallado","Kéfir o leche (1 l)"]],
  ["Despensa",["Copos de avena (500 g)","Pan integral de molde","Pan integral de barra","Lentejas (500 g)","Garbanzos cocidos (2 botes)","Atún al natural (4 latas)","Pasta integral y macarrones","Fideos","Arroz","Tomate triturado y tomate frito sin azúcar","Maíz","Harina integral (pizza)","Nueces o almendras (200 g)","AOVE, pimentón, comino y canela"]]
 ];
 function qtyTxt(q,li,u){if(Array.isArray(q)){const v=q[li];if(v===0||v==null)return null;return v+(u?" "+u:"")}return q||""}
@@ -1004,13 +1013,13 @@ function mealCard(icon,label,time,m,li,idx,L,extra){
   return '<div class="mcard'+(ck?" done":"")+'"><div class="mhead"><span class="mic">'+icon+'</span><div class="mt"><span class="lbl">'+label+' · '+time+'</span><b>'+esc(m.n)+'</b></div>'+(m.tag?'<span class="tag t-'+m.tag.toLowerCase().replace(/\s/g,"")+'">'+m.tag+'</span>':'')+'<input type="checkbox" data-meal="'+idx+'" '+(ck?"checked":"")+' aria-label="'+esc(label)+' hecho"></div>'+(extra||'')+'<ul class="mitems">'+items+'</ul>'+(m.tip?'<p class="mtip">'+esc(m.tip)+'</p>':'')+'</div>';
 }
 function renderDieta(){
-  const p=planFor(cur), t=targets(p), L=getLog(cur), li=LVI[t.lv]||0, w=WEEK[dow(cur)];
-  const des=L.des||(p.kind==="ride"?"B":"A");
+  const p=planFor(cur), t=targets(p), L=getLog(cur), li=LVI[t.lv]||0, w=Object.assign({},WEEK[dow(cur)],MEAL_OV[cur]||{});
+  const des=L.des||(dow(cur)<=4?"B":"A");
   const lvTxt=["Día suave, de fuerza o descanso","Día de entreno (1–2,5 h)","Día de salida larga"][li];
   let h='<div style="display:flex;flex-direction:column;gap:16px">';
   h+='<div class="daynav"><button id="prev" aria-label="Día anterior">‹</button><div style="text-align:center"><div class="lbl">'+esc(p.t)+'</div><h2>'+longDate(cur)+'</h2></div><button id="next" aria-label="Día siguiente">›</button></div>';
   h+='<section class="card hero"><span class="lbl">Objetivo del día · '+lvTxt+'</span><div class="big num">'+t.kcal+'<small> kcal</small></div>'+macroBar(t)+'<div class="kpis">'+kpi(t.c,"g","Hidratos")+kpi(t.pr,"g","Proteína")+kpi(t.fa,"g","Grasa")+'</div><p class="muted" style="margin:0;font-size:13px">Las cantidades de abajo ya están ajustadas al entreno de hoy. Cambian sobre todo los hidratos: pan, avena, arroz, pasta y patata.</p></section>';
-  const sw='<div class="seg" role="group" aria-label="Elige desayuno"><button data-des="A" aria-pressed="'+(des==="A")+'">Tostadas</button><button data-des="B" aria-pressed="'+(des==="B")+'">Avena</button></div>';
+  const sw='<div class="seg" role="group" aria-label="Elige desayuno"><button data-des="B" aria-pressed="'+(des==="B")+'">Yogur y avena</button><button data-des="A" aria-pressed="'+(des==="A")+'">Tostadas</button></div>';
   h+='<section class="card meals">';
   h+=mealCard("🍳","Desayuno","7:00",DES[des],li,0,L,sw);
   h+=mealCard("🍎","Media mañana","10:30",MM,li,1,L);
