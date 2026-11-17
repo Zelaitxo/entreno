@@ -435,7 +435,8 @@ const OV = {
   "2026-11-13":{key:"pre.tue",f:1,kind:"ride",t:"Exterior suave",m:40,z:"Z2",zones:["Z2"],d:"40' muy suaves. Si prefieres, cámbialo por un rodaje a pie tranquilo de 30'.",place:"Exterior",tag:"Vuelta tras enfermedad"},
   "2026-11-14":{key:"pre.tue",f:1,kind:"ride",t:"MTB Z2",m:75,z:"Z2",zones:["Z2"],d:"Salida tranquila en Z2, sin buscar las subidas duras. Come algo a la hora.",place:"Exterior",tag:"Vuelta tras enfermedad"},
   "2026-11-15":{key:"pre.tue",f:1,kind:"ride",t:"Carretera Z2",m:60,z:"Z2",zones:["Z2"],d:"Rodaje suave en llano o terreno ondulado.",place:"Exterior",tag:"Vuelta tras enfermedad"},
-  "2026-11-17":{key:"ramp",kind:"ride",t:"Test rampa en rodillo",m:40,z:"Z5",zones:["Z2"],d:"Repetición del test. En modo ERG el rodillo pone los vatios: tú solo mantén 85–95 rpm y aguanta hasta que no puedas más. No mires la zona verde del Garmin. La app calcula el FTP sola al sincronizar.",place:"Rodillo",tag:"Test"}
+  "2026-11-17":{kind:"str",t:"Fuerza + 30' rodillo Z2 (opcional)",m:60,z:"str",zones:[],d:"Fuerza de adaptación (2 series, peso ligero) y, si te quedan fuerzas, 30' de rodillo en Z2. Si estás muy cansado, haz solo una de las dos: vale más poco y constante que nada. El test de rampa se aplaza hasta que duermas mejor.",place:"Gimnasio en casa",tag:"Semanas de mucho trabajo"},
+  "2026-11-18":{key:"pre.tue",f:1,kind:"ride",t:"Rodillo Z2 suave (opcional)",m:30,z:"Z2",zones:["Z2"],d:"30' suaves solo si te apetece. Si llegas reventado del trabajo, descansa y duerme pronto.",place:"Rodillo",tag:"Semanas de mucho trabajo"}
 };
 function planFor(k){
   if(OV[k]) return Object.assign({tag:"Semana de inicio"},OV[k]);
